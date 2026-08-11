@@ -1,0 +1,81 @@
+{
+    "organisationUnitLevels": [
+        { "id": "zzBUGlevel1", "name": "National", "level": 1 },
+        { "id": "zzBUGlevel2", "name": "Facility", "level": 2 }
+    ],
+    "organisationUnits": [
+        {
+            "id": "zzBUGroot01",
+            "name": "Bug Test Country",
+            "shortName": "Bug Test Country",
+            "openingDate": "2020-01-01"
+        },
+        {
+            "id": "zzBUGfac001",
+            "name": "Bug Test Facility 1",
+            "shortName": "Bug Facility 1",
+            "openingDate": "2020-01-01",
+            "parent": { "id": "zzBUGroot01" }
+        },
+        {
+            "id": "zzBUGfac002",
+            "name": "Bug Test Facility 2",
+            "shortName": "Bug Facility 2",
+            "openingDate": "2020-01-01",
+            "parent": { "id": "zzBUGroot01" }
+        }
+    ],
+    "dataElements": [
+        {
+            "id": "zzBUGde0001",
+            "name": "Bug Test Cases",
+            "shortName": "Bug Test Cases",
+            "aggregationType": "SUM",
+            "domainType": "AGGREGATE",
+            "valueType": "INTEGER_ZERO_OR_POSITIVE",
+            "zeroIsSignificant": false,
+            "categoryCombo": { "id": "bjDvmb4bfuf" }
+        }
+    ],
+    "dataSets": [
+        {
+            "id": "zzBUGds0001",
+            "name": "Bug Test Monthly",
+            "shortName": "Bug Test Monthly",
+            "periodType": "Monthly",
+            "categoryCombo": { "id": "bjDvmb4bfuf" },
+            "dataSetElements": [
+                {
+                    "dataSet": { "id": "zzBUGds0001" },
+                    "dataElement": { "id": "zzBUGde0001" }
+                }
+            ],
+            "organisationUnits": [
+                { "id": "zzBUGfac001" },
+                { "id": "zzBUGfac002" }
+            ]
+        }
+    ],
+    "visualizations": [
+        {
+            "id": "zzBUGviz001",
+            "name": "Bug Test Cases by month",
+            "type": "COLUMN",
+            "dataDimensionItems": [
+                {
+                    "dataDimensionItemType": "DATA_ELEMENT",
+                    "dataElement": { "id": "zzBUGde0001" }
+                }
+            ],
+            "periods": [
+                { "id": "202601" },
+                { "id": "202602" },
+                { "id": "202603" }
+            ],
+            "organisationUnits": [ { "id": "zzBUGroot01" } ],
+            "columnDimensions": [ "dx" ],
+            "rowDimensions": [ "pe" ],
+            "filterDimensions": [ "ou" ]
+        }
+    ]
+}
