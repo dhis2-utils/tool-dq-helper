@@ -87,24 +87,44 @@ A fifth indicator replaces the retired outlier-values data element:
       value by 100 — a raw 8 is reported as 800. The app looks up a
       factor-1 type (`filter=factor:eq:1`, preferring `number: true`) and
       refuses to build the configuration if the instance has none.
-    - Its denominator ends in **`.aggregationType(MAX)`**. The denominator
-      is a guarded 1-or-0 per facility-month, which makes DHIS2 render
-      non-outliers and unassessable months as no value (a zero denominator
-      yields no value). Left to aggregate with the default SUM, the
-      denominator would become "number of outliers" and higher levels
-      would show the _average_ outlying value instead of the total; MAX
-      keeps it at 1, so levels above the facility sum the values.
+    - Its denominator ends in **`.aggregationType(MAX)`**, which is the
+      part that is easy to mistake for noise. The denominator is a guarded
+      1-or-0 per facility-month; that is what makes DHIS2 render
+      non-outliers and unassessable months as **no value**, because a zero
+      denominator yields no value. But a subexpression denominator
+      aggregates like any other — with the default SUM it becomes "number
+      of outliers", and every level above the facility then shows the
+      _average_ outlying value instead of the total. `MAX` pins it back to
+      1, so those levels sum.
 
-    Known wart, but not on a supported version: on **2.44-SNAPSHOT** an
+        The three possible designs, measured on the same fixture (four
+        outlying facility-months, two of them under district A, expected
+        district total 199 and root total 348):
+
+        | denominator                                | facility cells    | district A    | root         |
+        | ------------------------------------------ | ----------------- | ------------- | ------------ |
+        | guarded + `.aggregationType(MAX)` (chosen) | value / **blank** | **199**       | **348**      |
+        | `1`                                        | value / **0**     | 199           | 348          |
+        | guarded, default SUM                       | value / blank     | 100 (average) | 87 (average) |
+
+        So the modifier buys exactly one thing: blank instead of 0 in every
+        non-outlier and unassessable cell. `denominator: 1` is a legitimate
+        simpler alternative if zeros are acceptable — it aggregates
+        correctly too — but it fills a facility × month pivot with zeros and
+        contradicts the "blank when the inputs are missing" rule the other
+        metrics follow. The naive guarded denominator (no modifier) is the
+        one option that is simply wrong.
+
+    Known wart, on an unreleased version only: on **2.44-SNAPSHOT** an
     `.aggregationType()` modifier makes
     `POST /api/indicators/expression/description` fail with an internal
     error (`translationCache` NPE) instead of returning the description.
-    **2.42.6 returns it normally**, so supported versions are unaffected
-    (2.43 not retested); analytics and metadata import accept the
-    expression on both. The app's live test tolerates that one failure
-    explicitly so it keeps passing on 2.44, and the Maintenance app would
-    surface the same error there when the indicator is opened for editing.
-    Worth reporting upstream before 2.44 is released.
+    Every supported version (2.40.12, 2.41.10, 2.42.6, 2.43.1) returns it
+    normally, and analytics and metadata import accept the expression on
+    all of them including 2.44. The app's live test tolerates that one
+    failure explicitly so it keeps passing on 2.44, where the Maintenance
+    app would surface the same error when the indicator is opened for
+    editing. Worth reporting upstream before 2.44 is released.
 
 ### The outlier threshold predictor
 
@@ -240,16 +260,21 @@ Concretely:
   average instead of the sum (43 where 2,569 was expected); and producing
   blanks by dividing by zero inside the subexpression aborted the whole
   analytics request with `E7132`.
-- Outlier-values indicator on a supported version (2026-09-15, DHIS2
-  **2.42.6**, blank instance + the `subexpression-tests/fixture.py`
-  fixture): the app's own import created the indicator, the threshold
-  predictor wrote real thresholds, and analytics then returned the value
-  itself for the one outlying facility-month (100 against a threshold of
-  14 — not 10,000), blank for the two facilities below their threshold and
-  for the facility with a threshold but no value, and the root aggregate
-  equalled the sum of the outlying values. The full live suite (47 tests,
-  including gated deletion of the 5 indicators) passes against that
-  instance.
+- Outlier-values indicator, **version matrix 2.40 → 2.43** (2026-09-15):
+  the same cycle was run on blank instances at **2.40.12, 2.41.10, 2.42.6
+  and 2.43.1** — `subexpression-tests/fixture.py`, then the app's own
+  import (live suite, 46 tests + gated deletion verified separately), the
+  threshold predictor, an analytics run, and a comparison of the three
+  candidate denominators against the raw values. **All four versions gave
+  identical results**: the value itself on outlying facility-months (100
+  against a threshold of 14 — not 10,000), blank elsewhere, district total
+  199 and root total 348 where the default-SUM denominator produced the
+  averages 100 and 87. `POST /api/indicators/expression/description`
+  accepted the `.aggregationType(MAX)` denominator on all four.
+  Two setup notes for reproducing it: a blank ≤2.42 instance needs one
+  restart before its first metadata import (`bugs/03`), and a blank 2.43
+  returns empty analytics until `/api/configuration/dataOutputPeriodTypes`
+  is configured (DHIS2-20379).
 - Automated: 41 unit tests plus an env-gated live end-to-end test
   (`LIVE_DHIS2=… pnpm run test`) that runs initialise → preview → import →
   predictor run → server-side expression validation → threshold edit →
