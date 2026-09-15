@@ -525,6 +525,39 @@ export const templateHybridOutlier = (): MetadataBundle => {
             },
             {
                 annualized: false,
+                decimals: 0,
+                // The reported value itself, for dashboards and pivot
+                // tables that list the outlying values. Blank unless the
+                // value is an outlier: the guarded denominator is 0 both
+                // for non-outliers and for unassessable facility-months,
+                // and DHIS2 renders a zero denominator as no value — the
+                // same "only outliers are visible" behaviour the retired
+                // outlier-values data element had (it stored no zeros).
+                // aggregationType(MAX) instead of the default SUM keeps
+                // the denominator at 1 when aggregating, so higher levels
+                // show the SUM of the outlying values, not their average.
+                denominator:
+                    'subExpression(if(isNotNull(#{§DE_SOURCE§}) && isNotNull(#{§DE_THRESHOLD_V2§}), if(#{§DE_SOURCE§} > #{§DE_THRESHOLD_V2§}, 1, 0), 0)).aggregationType(MAX)',
+                denominatorDescription:
+                    'Orgunits reporting a §NAME§ value above the outlier threshold',
+                description:
+                    'The §NAME§ values that are outliers, i.e. above the outlier threshold (§THRESHOLD_DESC§), aggregated as the sum of those values. Blank when the value is not an outlier, and when the facility-month cannot be assessed (no value or no threshold).',
+                id: '§IN_OUTLIER_VAL_V2§',
+                indicatorType: {
+                    // Factor 1: this indicator reports the value itself,
+                    // so the percentage indicator type used by the other
+                    // three metrics would multiply it by 100.
+                    id: '§IN_TYPE_NUM§',
+                },
+                name: 'DQ - §NAME§ outlier values',
+                numerator:
+                    'subExpression(if(isNotNull(#{§DE_SOURCE§}) && isNotNull(#{§DE_THRESHOLD_V2§}), if(#{§DE_SOURCE§} > #{§DE_THRESHOLD_V2§}, #{§DE_SOURCE§}, 0), 0))',
+                numeratorDescription:
+                    '§NAME§ values above the outlier threshold',
+                shortName: '§SHORTNAME§ outlier values',
+            },
+            {
+                annualized: false,
                 denominator:
                     'subExpression(if(isNotNull(#{§DE_SOURCE§}) && isNotNull(#{§DE_THRESHOLD_V2§}), #{§DE_SOURCE§}, 0))',
                 denominatorDescription:

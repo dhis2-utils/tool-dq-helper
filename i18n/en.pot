@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-08-14T13:40:31.835Z\n"
-"PO-Revision-Date: 2026-08-14T13:40:31.836Z\n"
+"POT-Creation-Date: 2026-09-15T13:17:16.814Z\n"
+"PO-Revision-Date: 2026-09-15T13:17:16.814Z\n"
 
 msgid "Add new"
 msgstr "Add new"
@@ -140,6 +140,9 @@ msgstr "Excluding outliers (%)"
 
 msgid "Values that are outliers (%)"
 msgstr "Values that are outliers (%)"
+
+msgid "Outlier values"
+msgstr "Outlier values"
 
 msgid "Reported all 12 months (data element)"
 msgstr "Reported all 12 months (data element)"

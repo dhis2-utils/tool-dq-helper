@@ -463,6 +463,7 @@ export const deleteConfiguration = async (
                 '§IN_OUTLIER_PROP§',
                 '§IN_NOUTLIER_PROP_V2§',
                 '§IN_OUTLIER_PROP_V2§',
+                '§IN_OUTLIER_VAL_V2§',
             ])
         )
         await removeIfAny('predictorGroups', baseConfig.predictorGroup, pdIds)

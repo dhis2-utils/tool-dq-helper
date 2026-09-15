@@ -16,6 +16,13 @@ All notable changes to this project will be documented in this file.
   ordering constraints. Requires DHIS2 2.40.2+. Configurations created by
   the pre-platform tool keep working and remain viewable, editable and
   removable. See `docs/hybrid-templates.md`.
+- **New "outlier values" indicator**, replacing the outlier-values data
+  element the pre-platform tool maintained with a predictor: it reports the
+  reported value itself whenever it exceeds the threshold and is blank
+  otherwise, so a facility × month pivot lists only the outlying values,
+  and it aggregates to their sum. It uses a factor-1 indicator type (the
+  configuration now requires the instance to have one), so the values are
+  reported as-is rather than ×100.
 - **New default outlier method: modified Z-score** (`median + k·MAD/0.6745`,
   default k = 3.5, range 2.5–5.0). Mean + k·SD remains available
   (default 3.0, range 2.0–4.0).

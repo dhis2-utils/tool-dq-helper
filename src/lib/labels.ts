@@ -62,6 +62,7 @@ const outlierMetadataLabels = (): LabelMap => ({
         i18n.t('Values that are outliers (%)'),
     ],
     '§IN_NOUTLIER_PROP_V2§': ['indicator', i18n.t('Excluding outliers (%)')],
+    '§IN_OUTLIER_VAL_V2§': ['indicator', i18n.t('Outlier values')],
 })
 
 const consistencyMetadataLabels = (): LabelMap => ({

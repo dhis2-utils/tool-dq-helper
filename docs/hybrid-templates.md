@@ -47,8 +47,8 @@ Per configured data element:
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
 | Predictors        | 7–8 (threshold, 4 outlier comparisons, 2 consistency, 1 completeness for disaggregated)                                   | **1** (outlier threshold only)              |
 | Data elements     | 7–8 (threshold, excluding-outliers mirror, outlier/non-outlier counts, outlier values, all-12/any-12, any-disaggregation) | **1** (outlier threshold)                   |
-| Indicators        | 4                                                                                                                         | **4** (same four metrics)                   |
-| **Total objects** | **up to 20**                                                                                                              | **6**                                       |
+| Indicators        | 4                                                                                                                         | **5** (the four metrics + outlier values)   |
+| **Total objects** | **up to 20**                                                                                                              | **7**                                       |
 | Scheduled job     | predictor job, ordered chain                                                                                              | predictor job, single independent predictor |
 
 The four metrics are unchanged in name and intent:
@@ -71,6 +71,37 @@ The four metrics are unchanged in name and intent:
    directly against the threshold data element inside a subExpression.
 4. **Excluding outliers (%)** — sum of non-outlier values over the sum of
    assessable values.
+
+A fifth indicator replaces the retired outlier-values data element:
+
+5. **Outlier values** — the reported value itself whenever it exceeds the
+   threshold, for dashboards and pivot tables that list the outlying
+   values. It is blank unless the value is an outlier, so a facility ×
+   month pivot shows only outliers, and it aggregates to the **sum** of
+   the outlying values.
+
+    Two details in this indicator are load-bearing, and both were verified
+    against live analytics (see "Validation trail"):
+    - Its indicator type must have **factor 1**. The other four metrics are
+      percentages (factor 100); reusing that type here multiplies every
+      value by 100 — a raw 8 is reported as 800. The app looks up a
+      factor-1 type (`filter=factor:eq:1`, preferring `number: true`) and
+      refuses to build the configuration if the instance has none.
+    - Its denominator ends in **`.aggregationType(MAX)`**. The denominator
+      is a guarded 1-or-0 per facility-month, which makes DHIS2 render
+      non-outliers and unassessable months as no value (a zero denominator
+      yields no value). Left to aggregate with the default SUM, the
+      denominator would become "number of outliers" and higher levels
+      would show the _average_ outlying value instead of the total; MAX
+      keeps it at 1, so levels above the facility sum the values.
+
+    Known wart: an `.aggregationType()` modifier makes
+    `POST /api/indicators/expression/description` fail with an internal
+    error (`translationCache` NPE, seen on 2.44-SNAPSHOT) rather than
+    returning the expression's description. Analytics is unaffected and
+    metadata import accepts the expression; the app's live test tolerates
+    this one failure explicitly. The Maintenance app may surface the same
+    error when the indicator is opened for editing.
 
 ### The outlier threshold predictor
 
@@ -105,7 +136,7 @@ DHIS2. This means other ways of calculating tresholds can be supported as well.
   in `_V2`; no migration of existing entries is performed or required.
 - The app's **threshold edit** now rewrites only the threshold predictor and
   data element (names + generator); the indicators are untouched.
-- **Removal** of a V2 configuration deletes 4 indicators, 1 predictor and
+- **Removal** of a V2 configuration deletes 5 indicators, 1 predictor and
   1 data element (the same safety gates apply). Note: on 2.43 the threshold
   data element can be blocked from deletion by the data value changelog of
   past predictor runs — the app reports this cleanly.
@@ -192,7 +223,21 @@ Concretely:
 - Platform issues found on the way: `bugs/` (predictor SELECTED regression
   on 2.43; predictor-written values immutable via data APIs on 2.43; the
   ≤2.42 first-boot import quirk).
-- Automated: 40 unit tests plus an env-gated live end-to-end test
+- Outlier-values indicator (2026-09-15, DHIS2 2.44-SNAPSHOT on
+  play.im.dhis2.org/dev, Sierra Leone demo): four candidate designs were
+  built as real indicators over two existing data elements (one standing in
+  for the value, one for the threshold) and compared against the raw
+  analytics values of 1,216 facility-months in Bo district, which covered
+  all four cases (690 above / 475 below / 47 value-without-threshold / 4
+  threshold-without-value). Results: the chosen design (factor 1,
+  `.aggregationType(MAX)`) returned the exact value in all 690 outlier
+  cells, blank in the other 526, and the district total matched the sum of
+  the outlying values in all 12 months. A percentage indicator type
+  returned every value ×100; a default-SUM guarded denominator returned the
+  average instead of the sum (43 where 2,569 was expected); and producing
+  blanks by dividing by zero inside the subexpression aborted the whole
+  analytics request with `E7132`.
+- Automated: 41 unit tests plus an env-gated live end-to-end test
   (`LIVE_DHIS2=… pnpm run test`) that runs initialise → preview → import →
   predictor run → server-side expression validation → threshold edit →
   gated deletion against a real instance.

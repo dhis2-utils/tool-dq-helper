@@ -110,6 +110,7 @@ const updateThresholdV2 = async (
         ids: [
             config['§IN_OUTLIER_PROP_V2§'] as string,
             config['§IN_NOUTLIER_PROP_V2§'] as string,
+            config['§IN_OUTLIER_VAL_V2§'] as string,
         ].filter(Boolean),
         mutate: rename,
     })

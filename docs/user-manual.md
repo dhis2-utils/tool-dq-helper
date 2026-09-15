@@ -16,11 +16,11 @@ The app has three tabs:
 
 | Metric           | What it measures                                                                                                             | Generated metadata                        |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| **Outliers**     | Values above a per-org-unit outlier threshold, computed monthly from the previous 12 months (modified Z-score or mean + SD). | 1 data element, 1 predictor, 2 indicators |
+| **Outliers**     | Values above a per-org-unit outlier threshold, computed monthly from the previous 12 months (modified Z-score or mean + SD). | 1 data element, 1 predictor, 3 indicators |
 | **Consistency**  | Whether an org unit reports in all / any of the last 12 months.                                                              | 1 indicator                               |
 | **Completeness** | 100 × (org units reporting) / (reports expected).                                                                            | 1 indicator                               |
 
-Six objects in total per configured data element. The consistency and completeness metrics are pure indicators — they compute their per-facility logic at analytics query time using indicator `subExpression()` (available since DHIS2 2.40.2), so they need no scheduled job and never go stale. Only the outlier threshold is a stored value written by a predictor, because its calculation (median/MAD or mean/SD over a 12-month window) cannot be expressed in an indicator.
+Seven objects in total per configured data element. The outliers family has three indicators: the two percentages above, plus **"outlier values"**, which reports the reported value itself whenever it exceeds the threshold (blank otherwise), for dashboards and pivot tables that list the outlying values — it aggregates to the sum of those values. The consistency and completeness metrics are pure indicators — they compute their per-facility logic at analytics query time using indicator `subExpression()` (available since DHIS2 2.40.2), so they need no scheduled job and never go stale. Only the outlier threshold is a stored value written by a predictor, because its calculation (median/MAD or mean/SD over a 12-month window) cannot be expressed in an indicator.
 
 > The pre-platform (vanilla JS) versions of this tool instead generated a chain of up to 8 predictors and 8 intermediate data elements per configuration. Configurations created that way keep working and remain viewable, editable and removable in the app. See `hybrid-templates.md` for the rationale and the (small, deliberate) output differences.
 
@@ -161,7 +161,7 @@ Click **Edit** on a card to change the outlier threshold. A small inline form ap
 Saving will:
 
 1. Update the threshold predictor's generator expression to use the new _k_
-2. Update the names and descriptions of the threshold data element, the predictor, and the two outlier indicators to reflect the new threshold text
+2. Update the names and descriptions of the threshold data element, the predictor, and the three outlier indicators to reflect the new threshold text
 3. Save the new threshold to the DataStore entry
 
 Already-stored threshold values keep the old _k_ until the predictor job next runs.
@@ -233,6 +233,7 @@ A short in-app reference covering the same material in brief.
 ## Known limitations
 
 - Requires DHIS2 **2.40.2 or later** (multi-item `subExpression()` with `periodOffset`); the app's declared minimum version is 2.41.
+- The instance must have an indicator type with **factor 1** (e.g. "Number"), which the outlier-values indicator uses; without one, Preview reports an error. Every standard DHIS2 database ships one.
 - Only monthly data sets are fully automated. Configuring against a non-monthly data set emits a warning; the generated expressions must be adjusted by hand.
 - **Use the generated indicators in monthly layouts only.** The 12-month windows inside the indicators follow the _query's_ period type: in a quarterly chart the consistency indicator silently means "last 12 quarters". (The threshold predictor itself is always monthly.)
 - Instances running the **Doris analytics backend** are not yet supported — subExpression indicators generate PostgreSQL-specific SQL ([DHIS2-21793](https://dhis2.atlassian.net/browse/DHIS2-21793)).

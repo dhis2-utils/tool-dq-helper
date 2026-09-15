@@ -33,6 +33,7 @@ export const generateUids = async (
 // Module-level caches are safe: these ids never change within a session.
 let cachedDefaultCocId: string | null = null
 let cachedPercentIndicatorTypeId: string | null = null
+let cachedNumberIndicatorTypeId: string | null = null
 
 const defaultCocId = async (
     api: D2Api,
@@ -77,6 +78,45 @@ const percentIndicatorTypeId = async (
     }
     cachedPercentIndicatorTypeId = indicatorTypes[0].id
     return cachedPercentIndicatorTypeId
+}
+
+/**
+ * Indicator type with factor 1, for the outlier-values indicator, which
+ * reports the reported value itself rather than a percentage.
+ */
+const numberIndicatorTypeId = async (
+    api: D2Api,
+    onWarning: WarningHandler
+): Promise<string> => {
+    if (cachedNumberIndicatorTypeId) {
+        return cachedNumberIndicatorTypeId
+    }
+    const data = await api.get<{
+        indicatorTypes: { id: string; number: boolean }[]
+    }>('indicatorTypes', {
+        fields: 'id,number',
+        filter: 'factor:eq:1',
+    })
+    const indicatorTypes = data.indicatorTypes
+    if (indicatorTypes.length === 0) {
+        throw new Error(
+            'No indicator type with factor 1 found. The outlier values ' +
+                'indicator needs one (e.g. "Number"); create it in the ' +
+                'Maintenance app and try again.'
+        )
+    }
+    if (indicatorTypes.length > 1) {
+        onWarning(
+            'Duplicate number indicator types found. Using the first match.'
+        )
+    }
+    // A plain number type is the intended match; fall back to any
+    // factor-1 type if the instance labels it differently.
+    const numberType =
+        indicatorTypes.find((indicatorType) => indicatorType.number) ||
+        indicatorTypes[0]
+    cachedNumberIndicatorTypeId = numberType.id
+    return cachedNumberIndicatorTypeId
 }
 
 /** Restrict visibility to the app's admin user group. */
@@ -152,6 +192,8 @@ interface ConfigureInputs {
 
 interface SystemIds {
     inTypeId: string
+    // factor 1, for the outlier-values indicator
+    inTypeNumberId: string
     cocDefaultId: string
 }
 
@@ -160,7 +202,7 @@ const configureOutlierMetadata = (
     inputs: ConfigureInputs,
     ids: SystemIds
 ): Promise<CheckImport> => {
-    const { inTypeId, cocDefaultId } = ids
+    const { inTypeId, inTypeNumberId, cocDefaultId } = ids
     const generator = thresholdGenerator(inputs.outlierMethod, inputs.threshold)
     const methodValueKey =
         inputs.outlierMethod === 'modZ' ? '§VAL_MODZ§' : '§VAL_STDDEV§'
@@ -176,17 +218,19 @@ const configureOutlierMetadata = (
         '§DE_SOURCE§': inputs.dataElement.id,
         '§COC_DEFAULT§': cocDefaultId,
         '§IN_TYPE§': inTypeId,
+        '§IN_TYPE_NUM§': inTypeNumberId,
         '§OU_LEVEL§': inputs.ouLevelId,
         [methodValueKey]: inputs.threshold,
         '§DE_THRESHOLD_V2§': false,
         '§PD_THRESHOLD_V2§': false,
         '§IN_OUTLIER_PROP_V2§': false,
         '§IN_NOUTLIER_PROP_V2§': false,
+        '§IN_OUTLIER_VAL_V2§': false,
     }
     return buildFromTemplate(api, {
         template: templateHybridOutlier(),
         config,
-        uidCount: 4,
+        uidCount: 5,
         userGroupId: inputs.userGroupId,
     })
 }
@@ -382,6 +426,7 @@ export const buildPendingImport = async (
     }
 
     const inTypeId = await percentIndicatorTypeId(api, onWarning)
+    const inTypeNumberId = await numberIndicatorTypeId(api, onWarning)
     const cocId = await defaultCocId(api, onWarning)
 
     const inputs: ConfigureInputs = {
@@ -393,7 +438,7 @@ export const buildPendingImport = async (
         userGroupId: request.userGroupId,
     }
 
-    const ids: SystemIds = { inTypeId, cocDefaultId: cocId }
+    const ids: SystemIds = { inTypeId, inTypeNumberId, cocDefaultId: cocId }
     const outlier = await configureOutlierMetadata(api, inputs, ids)
     const consistency = await configureConsistencyMetadata(api, inputs, ids)
 
