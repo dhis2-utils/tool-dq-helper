@@ -1,7 +1,7 @@
 /** @type {import('@dhis2/cli-app-scripts').D2Config} */
 const config = {
     type: 'app',
-    name: 'tool-dq-config',
+    name: 'tool-dq-helper',
     title: 'DQ Metrics Configuration Tool',
     description:
         'Tool for system administrators to configure data quality metrics metadata (outliers, consistency, completeness).',

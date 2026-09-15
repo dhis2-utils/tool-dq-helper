@@ -39,7 +39,7 @@ To compile the app to a `.zip` file that can be installed in DHIS2
 pnpm run build
 ```
 
-The installable archive is written to `build/bundle/tool-dq-config-<version>.zip`.
+The installable archive is written to `build/bundle/tool-dq-helper-<version>.zip`.
 
 ### Lint and format
 

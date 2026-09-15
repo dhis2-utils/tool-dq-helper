@@ -24,7 +24,7 @@ DATASET=${DATASET:?set DATASET}
 DE=${DE:?set DE}
 PROXY_COC=${PROXY_COC:-}   # empty = data element without disaggregation
 OULEVEL=${OULEVEL:?set OULEVEL e.g. "Level 4 - Facility"}
-APP_KEY=${APP_KEY:-tool-dq-config}
+APP_KEY=${APP_KEY:-tool-dq-helper}
 
 PASS=0; FAIL=0
 step() { echo; echo "== $1"; }
