@@ -11,6 +11,17 @@ publicHoistPattern:
     - '@dhis2/app-adapter'
     - '@dhis2/pwa'
 
+# Keep both platforms' native binaries (rollup, esbuild) installed, so the
+# same node_modules works on a macOS host and in a Linux container without
+# a reinstall stripping the other side's bindings.
+supportedArchitectures:
+    os:
+        - darwin
+        - linux
+    cpu:
+        - arm64
+        - x64
+
 onlyBuiltDependencies:
     - '@dhis2/cli-helpers-engine'
     - core-js-pure
