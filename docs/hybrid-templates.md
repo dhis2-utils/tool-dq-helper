@@ -95,13 +95,16 @@ A fifth indicator replaces the retired outlier-values data element:
       would show the _average_ outlying value instead of the total; MAX
       keeps it at 1, so levels above the facility sum the values.
 
-    Known wart: an `.aggregationType()` modifier makes
+    Known wart, but not on a supported version: on **2.44-SNAPSHOT** an
+    `.aggregationType()` modifier makes
     `POST /api/indicators/expression/description` fail with an internal
-    error (`translationCache` NPE, seen on 2.44-SNAPSHOT) rather than
-    returning the expression's description. Analytics is unaffected and
-    metadata import accepts the expression; the app's live test tolerates
-    this one failure explicitly. The Maintenance app may surface the same
-    error when the indicator is opened for editing.
+    error (`translationCache` NPE) instead of returning the description.
+    **2.42.6 returns it normally**, so supported versions are unaffected
+    (2.43 not retested); analytics and metadata import accept the
+    expression on both. The app's live test tolerates that one failure
+    explicitly so it keeps passing on 2.44, and the Maintenance app would
+    surface the same error there when the indicator is opened for editing.
+    Worth reporting upstream before 2.44 is released.
 
 ### The outlier threshold predictor
 
@@ -237,6 +240,16 @@ Concretely:
   average instead of the sum (43 where 2,569 was expected); and producing
   blanks by dividing by zero inside the subexpression aborted the whole
   analytics request with `E7132`.
+- Outlier-values indicator on a supported version (2026-09-15, DHIS2
+  **2.42.6**, blank instance + the `subexpression-tests/fixture.py`
+  fixture): the app's own import created the indicator, the threshold
+  predictor wrote real thresholds, and analytics then returned the value
+  itself for the one outlying facility-month (100 against a threshold of
+  14 — not 10,000), blank for the two facilities below their threshold and
+  for the facility with a threshold but no value, and the root aggregate
+  equalled the sum of the outlying values. The full live suite (47 tests,
+  including gated deletion of the 5 indicators) passes against that
+  instance.
 - Automated: 41 unit tests plus an env-gated live end-to-end test
   (`LIVE_DHIS2=… pnpm run test`) that runs initialise → preview → import →
   predictor run → server-side expression validation → threshold edit →
