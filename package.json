@@ -1,6 +1,6 @@
 {
     "name": "tool-dq-config",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Tool to configure data quality metrics metadata in DHIS2",
     "license": "BSD-3-Clause",
     "private": true,

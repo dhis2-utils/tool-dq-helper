@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.1 — 2026-09-15
+
+### Added
+
+- **"Outlier values" indicator** in the outliers metadata, replacing the
+  outlier-values data element the pre-platform tool maintained with a
+  predictor. It reports the reported value itself whenever that value
+  exceeds the outlier threshold and is blank otherwise, so a facility ×
+  month pivot lists only the outlying values, and it aggregates to their
+  sum. A configuration now generates 7 objects instead of 6 (5 indicators,
+  1 predictor, 1 data element); removal deletes 5 indicators.
+- The configuration now requires the instance to have an **indicator type
+  with factor 1** (e.g. "Number"), which this indicator uses so the values
+  are reported as-is rather than multiplied by 100. Preview reports a clear
+  error if the instance has none.
+
+### Notes for upgrading from 1.0.0
+
+- Existing configurations are unaffected: the new indicator is only added
+  to configurations created from 1.0.1 onwards. To add it to a
+  configuration created with 1.0.0, remove and re-create that
+  configuration, or add the indicator by hand (its expressions are in
+  `docs/hybrid-templates.md`).
+- Verified on DHIS2 2.40.12, 2.41.10, 2.42.6 and 2.43.1, and against a
+  live pivot table on a real database, where the new indicator reproduced
+  the previous values exactly (41 of 41 displayed cells, unchanged totals).
+
 ## 1.0.0 — 2026-08-17
 
 ### Changed
