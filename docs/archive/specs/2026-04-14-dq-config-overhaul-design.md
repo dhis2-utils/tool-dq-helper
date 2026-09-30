@@ -38,6 +38,7 @@ Error handling: if any group creation fails, show an error notification and stop
 **Problem:** Misspelled key used throughout the codebase and stored in the dataStore.
 
 **Fix:** Rename to `predictorGroupThreshold` everywhere, including:
+
 - The `baseConfig` dataStore key
 - The internal `"treshold"` / `"analysis"` object keys returned by `splitOutlierPredictors()` → rename to `"threshold"` / `"analysis"`
 - All call sites that read `splitOutlierPredictors(...)["treshold"]` → `["threshold"]`
@@ -92,6 +93,7 @@ When reading baseConfig from dataStore:
 **Cards:** `background: var(--dhis2-surface)`, `border: 1px solid var(--dhis2-border)`, `border-radius: var(--dhis2-radius)`, `padding: 20px`.
 
 **Buttons:**
+
 - Primary: `background: var(--dhis2-primary)`, white text, 4px radius, 500 weight, 8px 24px padding.
 - Destructive: `background: var(--dhis2-error)`, white text. Used for delete confirmation.
 - Disabled: gray background, `cursor: not-allowed`.
@@ -124,6 +126,7 @@ Load Roboto 400/500 via Google Fonts `<link>` in `index.html`. Fallback to `syst
 ### Dependencies to Remove
 
 From `package.json`:
+
 - `jquery`
 - `webpack-jquery-ui`
 
@@ -131,20 +134,20 @@ From `webpack.config.js`: remove the `webpack.ProvidePlugin` block that injects 
 
 ### Replacement Pattern
 
-| jQuery | Vanilla JS |
-|--------|-----------|
-| `$("#id")` | `el("id")` helper: `function el(id) { return document.getElementById(id); }` — ID-only lookup, returns null if not found |
-| `.val()` | `.value` |
-| `.html(str)` | `.innerHTML = str` |
-| `.show()` | `.style.display = ""` |
-| `.hide()` | `.style.display = "none"` |
-| `.toggle(bool)` | `.style.display = bool ? "" : "none"` |
-| `.prop("disabled", x)` | `.disabled = x` |
-| `.on("change", fn)` | `.addEventListener("change", fn)` |
-| `.find(":selected")` | `.options[el.selectedIndex]` |
-| `.is(":checked")` | `.checked` |
-| `.is(":visible")` | `.style.display !== "none"` |
-| `$("#tabs").tabs()` | Custom tab switching via `data-tab` attributes |
+| jQuery                 | Vanilla JS                                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `$("#id")`             | `el("id")` helper: `function el(id) { return document.getElementById(id); }` — ID-only lookup, returns null if not found |
+| `.val()`               | `.value`                                                                                                                 |
+| `.html(str)`           | `.innerHTML = str`                                                                                                       |
+| `.show()`              | `.style.display = ""`                                                                                                    |
+| `.hide()`              | `.style.display = "none"`                                                                                                |
+| `.toggle(bool)`        | `.style.display = bool ? "" : "none"`                                                                                    |
+| `.prop("disabled", x)` | `.disabled = x`                                                                                                          |
+| `.on("change", fn)`    | `.addEventListener("change", fn)`                                                                                        |
+| `.find(":selected")`   | `.options[el.selectedIndex]`                                                                                             |
+| `.is(":checked")`      | `.checked`                                                                                                               |
+| `.is(":visible")`      | `.style.display !== "none"`                                                                                              |
+| `$("#tabs").tabs()`    | Custom tab switching via `data-tab` attributes                                                                           |
 
 ### Event Binding
 
@@ -157,6 +160,7 @@ Remove all `onclick` attributes from HTML. Bind events in JS via `addEventListen
 **UI:** Each config card on the overview tab gets a small delete button (text button, destructive color) in the card header.
 
 **Flow:**
+
 1. User clicks delete on a config card
 2. DHIS2-styled confirmation modal: "Remove DQ configuration for '{name}'? The DHIS2 metadata (data elements, predictors, indicators) will not be deleted."
 3. On confirm:
@@ -175,22 +179,23 @@ Remove all `onclick` attributes from HTML. Bind events in JS via `addEventListen
 **UI:** Each config card with outlier configuration gets an edit button. Clicking it shows an inline form on the card with a number input for the new SD value and save/cancel buttons.
 
 **Flow:**
+
 1. User clicks edit, enters new SD value
 2. On save:
    a. Read the outlier config from dataStore
    b. Update `§VAL_STDDEV§` in the stored config
    c. Fetch each piece of metadata that references the SD value via their stored IDs:
-      - Threshold data element (`§DE_THRESHOLD§`): name contains `"mean + {OLD} SD"`
-      - Threshold predictor (`§PD_THRESHOLD§`): expression contains `"{OLD} * stddevPop"`, name/description contain `"mean + {OLD} SD"`
-      - Non-outlier value data element (`§DE_NOUTLIER_VAL§`): description contains `"mean + {OLD} SD"`
-      - Outlier indicators (`§IN_NOUTLIER_PROP§`, `§IN_OUTLIER_PROP§`): description contains `"{OLD} standard deviations"`
-   d. Update using targeted patterns (not bare value replacement, to avoid corrupting unrelated numbers):
-      - `"mean + {OLD} SD"` → `"mean + {NEW} SD"` (in names and descriptions)
-      - `"{OLD} standard deviations"` → `"{NEW} standard deviations"` (in descriptions)
-      - `"({OLD} * stddevPop"` → `"({NEW} * stddevPop"` (in predictor expressions)
-      - `"+ {OLD} SD)"` → `"+ {NEW} SD)"` (in names)
-   e. PUT each updated metadata object back via `/api/metadata`
-   f. PUT updated config to dataStore
+    - Threshold data element (`§DE_THRESHOLD§`): name contains `"mean + {OLD} SD"`
+    - Threshold predictor (`§PD_THRESHOLD§`): expression contains `"{OLD} * stddevPop"`, name/description contain `"mean + {OLD} SD"`
+    - Non-outlier value data element (`§DE_NOUTLIER_VAL§`): description contains `"mean + {OLD} SD"`
+    - Outlier indicators (`§IN_NOUTLIER_PROP§`, `§IN_OUTLIER_PROP§`): description contains `"{OLD} standard deviations"`
+      d. Update using targeted patterns (not bare value replacement, to avoid corrupting unrelated numbers):
+    - `"mean + {OLD} SD"` → `"mean + {NEW} SD"` (in names and descriptions)
+    - `"{OLD} standard deviations"` → `"{NEW} standard deviations"` (in descriptions)
+    - `"({OLD} * stddevPop"` → `"({NEW} * stddevPop"` (in predictor expressions)
+    - `"+ {OLD} SD)"` → `"+ {NEW} SD)"` (in names)
+      e. PUT each updated metadata object back via `/api/metadata`
+      f. PUT updated config to dataStore
 3. Show success/error notification
 4. Refresh config list
 
@@ -201,11 +206,11 @@ Remove all `onclick` attributes from HTML. Bind events in JS via `addEventListen
 ### Loading States
 
 - A loading overlay (semi-transparent with a CSS spinner) shown during:
-  - Initialization
-  - Preview generation
-  - Metadata import
-  - Edit save
-  - Delete operation
+    - Initialization
+    - Preview generation
+    - Metadata import
+    - Edit save
+    - Delete operation
 - All action buttons disabled during operations to prevent double-clicks.
 
 ### Notification System
@@ -225,6 +230,7 @@ function showNotification(message, type = "info")
 ### Import Results
 
 Style the results table as a DHIS2 card with row-level color coding:
+
 - SUCCESS rows: green text/icon
 - ERROR rows: red text/icon with error detail
 
@@ -311,16 +317,16 @@ Tab switching logic reads `data-tab` from the clicked element, hides all `.tab-c
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `src/app.js` | Full rewrite |
-| `src/index.html` | Full rewrite |
-| `src/css/style.css` | Full rewrite |
-| `package.json` | Remove `jquery`, `webpack-jquery-ui` from dependencies |
-| `webpack.config.js` | Remove `webpack.ProvidePlugin` block for jQuery (lines 117-121) |
-| `src/js/d2api.js` | No changes |
-| `src/js/templates.js` | No changes |
-| `src/resources/dhis-header-bar.js` | No changes |
+| File                               | Change                                                          |
+| ---------------------------------- | --------------------------------------------------------------- |
+| `src/app.js`                       | Full rewrite                                                    |
+| `src/index.html`                   | Full rewrite                                                    |
+| `src/css/style.css`                | Full rewrite                                                    |
+| `package.json`                     | Remove `jquery`, `webpack-jquery-ui` from dependencies          |
+| `webpack.config.js`                | Remove `webpack.ProvidePlugin` block for jQuery (lines 117-121) |
+| `src/js/d2api.js`                  | No changes                                                      |
+| `src/js/templates.js`              | No changes                                                      |
+| `src/resources/dhis-header-bar.js` | No changes                                                      |
 
 ## Out of Scope
 

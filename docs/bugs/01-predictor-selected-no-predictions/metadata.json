@@ -1,0 +1,64 @@
+{
+    "dataElements": [
+        {
+            "id": "zzDQbugDE01",
+            "name": "ZZZ DQ bug test - output SELECTED",
+            "shortName": "ZZZ DQbug out SEL",
+            "aggregationType": "SUM",
+            "domainType": "AGGREGATE",
+            "valueType": "INTEGER_ZERO_OR_POSITIVE",
+            "zeroIsSignificant": false,
+            "categoryCombo": { "id": "bjDvmb4bfuf" }
+        },
+        {
+            "id": "zzDQbugDE02",
+            "name": "ZZZ DQ bug test - output DESCENDANTS",
+            "shortName": "ZZZ DQbug out DESC",
+            "aggregationType": "SUM",
+            "domainType": "AGGREGATE",
+            "valueType": "INTEGER_ZERO_OR_POSITIVE",
+            "zeroIsSignificant": false,
+            "categoryCombo": { "id": "bjDvmb4bfuf" }
+        }
+    ],
+    "predictors": [
+        {
+            "id": "zzDQbugPD01",
+            "name": "ZZZ DQ bug test - SELECTED",
+            "shortName": "ZZZ DQbug SEL",
+            "output": { "id": "zzDQbugDE01" },
+            "outputCombo": { "id": "HllvX50cXC0" },
+            "generator": {
+                "expression": "if(isNotNull(#{fbfJHSPpUQD}),1,0)",
+                "missingValueStrategy": "SKIP_IF_ALL_VALUES_MISSING",
+                "slidingWindow": false,
+                "description": "1 if ANC 1st visit reported"
+            },
+            "periodType": "Monthly",
+            "organisationUnitLevels": [{ "id": "m9lBJogzE95" }],
+            "organisationUnitDescendants": "SELECTED",
+            "sequentialSampleCount": 0,
+            "annualSampleCount": 0,
+            "sequentialSkipCount": 0
+        },
+        {
+            "id": "zzDQbugPD02",
+            "name": "ZZZ DQ bug test - DESCENDANTS",
+            "shortName": "ZZZ DQbug DESC",
+            "output": { "id": "zzDQbugDE02" },
+            "outputCombo": { "id": "HllvX50cXC0" },
+            "generator": {
+                "expression": "if(isNotNull(#{fbfJHSPpUQD}),1,0)",
+                "missingValueStrategy": "SKIP_IF_ALL_VALUES_MISSING",
+                "slidingWindow": false,
+                "description": "1 if ANC 1st visit reported"
+            },
+            "periodType": "Monthly",
+            "organisationUnitLevels": [{ "id": "m9lBJogzE95" }],
+            "organisationUnitDescendants": "DESCENDANTS",
+            "sequentialSampleCount": 0,
+            "annualSampleCount": 0,
+            "sequentialSkipCount": 0
+        }
+    ]
+}

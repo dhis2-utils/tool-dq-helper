@@ -1,0 +1,40 @@
+{
+    "dataValues": [
+        {
+            "dataElement": "zzBUGde0001",
+            "period": "202601",
+            "orgUnit": "zzBUGfac001",
+            "value": "10"
+        },
+        {
+            "dataElement": "zzBUGde0001",
+            "period": "202602",
+            "orgUnit": "zzBUGfac001",
+            "value": "12"
+        },
+        {
+            "dataElement": "zzBUGde0001",
+            "period": "202603",
+            "orgUnit": "zzBUGfac001",
+            "value": "11"
+        },
+        {
+            "dataElement": "zzBUGde0001",
+            "period": "202601",
+            "orgUnit": "zzBUGfac002",
+            "value": "20"
+        },
+        {
+            "dataElement": "zzBUGde0001",
+            "period": "202602",
+            "orgUnit": "zzBUGfac002",
+            "value": "22"
+        },
+        {
+            "dataElement": "zzBUGde0001",
+            "period": "202603",
+            "orgUnit": "zzBUGfac002",
+            "value": "21"
+        }
+    ]
+}

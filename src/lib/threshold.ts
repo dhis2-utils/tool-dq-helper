@@ -1,8 +1,11 @@
-// Editing the outlier threshold (standard deviations) of an existing
-// configuration: renames the affected metadata objects and updates the
-// predictor expression, then records the new value in the dataStore.
+// Editing the outlier threshold value (k) of an existing configuration:
+// renames the affected metadata objects and updates the predictor
+// expression, then records the new value in the dataStore. Handles both
+// legacy (mean + k SD, 5 predictors) and V2 hybrid configurations
+// (single threshold predictor; modified-Z or mean + k SD).
 import { D2Api } from './api'
-import { MetadataObject, StoreEntry } from './types'
+import { thresholdGenerator } from './templates'
+import { MetadataObject, PlaceholderConfig, StoreEntry } from './types'
 
 /**
  * Replace the old SD value with the new one in the strings the templates
@@ -45,6 +48,78 @@ const updateObjects = async (
     await api.post('metadata', { [endpoint]: objects })
 }
 
+/** Record the edit time from the server clock (zone-less date strings —
+ * a client-side timestamp would skew by the browser's timezone offset). */
+const stampEditedAt = async (
+    api: D2Api,
+    config: PlaceholderConfig,
+    predictorId: string | undefined
+): Promise<void> => {
+    if (!predictorId) {
+        return
+    }
+    const stamp = await api.get<{ lastUpdated: string }>(
+        `predictors/${predictorId}`,
+        { fields: 'lastUpdated' }
+    )
+    config.editedAt = stamp.lastUpdated
+}
+
+/** V2 hybrid: only the threshold data element + predictor embed k. */
+const updateThresholdV2 = async (
+    api: D2Api,
+    config: PlaceholderConfig,
+    newK: string
+): Promise<void> => {
+    const method = config['§VAL_MODZ§'] ? 'modZ' : 'sd'
+    const valueKey = method === 'modZ' ? '§VAL_MODZ§' : '§VAL_STDDEV§'
+    const oldDesc = config['§THRESHOLD_DESC§'] as string
+    const generator = thresholdGenerator(method, newK)
+    const expression = generator.expression
+        .split('§DE_SOURCE§')
+        .join(config['§DE_SOURCE§'] as string)
+
+    const rename = (object: MetadataObject): void => {
+        object.name = (object.name || '')
+            .split(oldDesc)
+            .join(generator.description)
+        object.description = (object.description || '')
+            .split(oldDesc)
+            .join(generator.description)
+    }
+
+    await updateObjects(api, {
+        endpoint: 'dataElements',
+        ids: [config['§DE_THRESHOLD_V2§'] as string],
+        mutate: rename,
+    })
+    const predictorId = config['§PD_THRESHOLD_V2§'] as string
+    await updateObjects(api, {
+        endpoint: 'predictors',
+        ids: [predictorId],
+        mutate: (predictor) => {
+            rename(predictor)
+            if (predictor.generator) {
+                predictor.generator.expression = expression
+            }
+        },
+    })
+    // The outlier indicators mention the threshold description too
+    await updateObjects(api, {
+        endpoint: 'indicators',
+        ids: [
+            config['§IN_OUTLIER_PROP_V2§'] as string,
+            config['§IN_NOUTLIER_PROP_V2§'] as string,
+            config['§IN_OUTLIER_VAL_V2§'] as string,
+        ].filter(Boolean),
+        mutate: rename,
+    })
+
+    config[valueKey] = newK
+    config['§THRESHOLD_DESC§'] = generator.description
+    await stampEditedAt(api, config, predictorId)
+}
+
 export const updateOutlierThreshold = async (
     api: D2Api,
     deId: string,
@@ -58,6 +133,14 @@ export const updateOutlierThreshold = async (
         throw new Error('Outlier configuration not found.')
     }
     const config = outliers[entryIndex][deId]
+
+    if (config['§PD_THRESHOLD_V2§']) {
+        await updateThresholdV2(api, config, newSD)
+        outliers[entryIndex] = { [deId]: config }
+        await api.put('dataStore/dqConfig', 'outliers', outliers)
+        return
+    }
+
     const oldSD = config['§VAL_STDDEV§'] as string
 
     const substitute = (value?: string): string =>
@@ -109,16 +192,7 @@ export const updateOutlierThreshold = async (
     config['§VAL_STDDEV§'] = newSD
     // Record when the app itself modified the generated metadata, so the
     // deletion safety gate can distinguish app edits from manual edits.
-    // The timestamp MUST come from the server, not the client clock:
-    // DHIS2 returns zone-less date strings, so comparing a client-side
-    // UTC timestamp against them skews by the browser's timezone offset.
-    if (thresholdPredictorIds.length > 0) {
-        const stamp = await api.get<{ lastUpdated: string }>(
-            `predictors/${thresholdPredictorIds[0]}`,
-            { fields: 'lastUpdated' }
-        )
-        config.editedAt = stamp.lastUpdated
-    }
+    await stampEditedAt(api, config, thresholdPredictorIds[0])
     outliers[entryIndex] = { [deId]: config }
     await api.put('dataStore/dqConfig', 'outliers', outliers)
 }

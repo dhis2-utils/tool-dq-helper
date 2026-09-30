@@ -21,7 +21,12 @@ import { ImportResultsTable } from '@/components/ImportResultsTable'
 import { LoadingLayer } from '@/components/LoadingLayer'
 import { Panel } from '@/components/Panel'
 import { PreviewSection } from '@/components/PreviewSection'
-import { ThresholdField, isValidThreshold } from '@/components/ThresholdField'
+import {
+    ThresholdField,
+    OutlierMethod,
+    defaultThreshold,
+    isValidThreshold,
+} from '@/components/ThresholdField'
 import {
     useDataElements,
     useDataSets,
@@ -51,7 +56,8 @@ export const ConfigurePage = ({ baseConfig }: { baseConfig: BaseConfig }) => {
     >('proxy')
     const [proxyOperandId, setProxyOperandId] = useState<string>()
     const [ouLevelId, setOuLevelId] = useState<string>()
-    const [threshold, setThreshold] = useState('3.0')
+    const [outlierMethod, setOutlierMethod] = useState<OutlierMethod>('modZ')
+    const [threshold, setThreshold] = useState(defaultThreshold('modZ'))
 
     const [busy, setBusy] = useState(false)
     const [pending, setPending] = useState<PendingImport | null>(null)
@@ -88,7 +94,7 @@ export const ConfigurePage = ({ baseConfig }: { baseConfig: BaseConfig }) => {
             ? `${dataElementId}.${disaggregation}`
             : dataElementId
 
-    const thresholdValid = isValidThreshold(threshold)
+    const thresholdValid = isValidThreshold(threshold, outlierMethod)
 
     const canPreview = Boolean(
         dataSetId &&
@@ -116,6 +122,7 @@ export const ConfigurePage = ({ baseConfig }: { baseConfig: BaseConfig }) => {
                     deSourceId: effectiveDeSourceId as string,
                     dataSetId: dataSetId as string,
                     ouLevelId: ouLevelId as string,
+                    outlierMethod,
                     threshold,
                     completenessApproach: showCompletenessChoice
                         ? (completenessApproach as CompletenessApproach)
@@ -406,10 +413,37 @@ export const ConfigurePage = ({ baseConfig }: { baseConfig: BaseConfig }) => {
                 </div>
 
                 <div className={styles.formField}>
+                    <SingleSelectField
+                        label={i18n.t('Outlier detection method')}
+                        selected={outlierMethod}
+                        onChange={({ selected }) => {
+                            const method = selected as OutlierMethod
+                            setOutlierMethod(method)
+                            setThreshold(defaultThreshold(method))
+                            clearPreview()
+                        }}
+                    >
+                        <SingleSelectOption
+                            value="modZ"
+                            label={i18n.t('Modified Z-score (recommended)')}
+                        />
+                        <SingleSelectOption
+                            value="sd"
+                            label={i18n.t('Standard deviations from mean')}
+                        />
+                    </SingleSelectField>
+                </div>
+
+                <div className={styles.formField}>
                     <ThresholdField
-                        label={i18n.t(
-                            'Outlier threshold (standard deviations from mean)'
-                        )}
+                        label={
+                            outlierMethod === 'modZ'
+                                ? i18n.t('Outlier threshold (modified Z-score)')
+                                : i18n.t(
+                                      'Outlier threshold (standard deviations from mean)'
+                                  )
+                        }
+                        method={outlierMethod}
                         value={threshold}
                         onChange={(value) => {
                             setThreshold(value)

@@ -2,13 +2,66 @@
 
 All notable changes to this project will be documented in this file.
 
-## 1.0.0 — 2026-07-15
+## 1.0.1 — 2026-09-15
+
+### Added
+
+- **"Outlier values" indicator** in the outliers metadata, replacing the
+  outlier-values data element the pre-platform tool maintained with a
+  predictor. It reports the reported value itself whenever that value
+  exceeds the outlier threshold and is blank otherwise, so a facility ×
+  month pivot lists only the outlying values, and it aggregates to their
+  sum. A configuration now generates 7 objects instead of 6 (5 indicators,
+  1 predictor, 1 data element); removal deletes 5 indicators.
+- The configuration now requires the instance to have an **indicator type
+  with factor 1** (e.g. "Number"), which this indicator uses so the values
+  are reported as-is rather than multiplied by 100. Preview reports a clear
+  error if the instance has none.
+
+### Notes for upgrading from 1.0.0
+
+- Existing configurations are unaffected: the new indicator is only added
+  to configurations created from 1.0.1 onwards. To add it to a
+  configuration created with 1.0.0, remove and re-create that
+  configuration, or add the indicator by hand (its expressions are in
+  `docs/hybrid-templates.md`).
+- Verified on DHIS2 2.40.12, 2.41.10, 2.42.6 and 2.43.1, and against a
+  live pivot table on a real database, where the new indicator reproduced
+  the previous values exactly (41 of 41 displayed cells, unchanged totals).
+
+## 1.0.0 — 2026-08-17
 
 ### Changed
 
-- **Migrated to the DHIS2 App Platform** (React 18, TypeScript, `@dhis2/ui`, `@dhis2/app-runtime`, TanStack Query). Replaces the vanilla-JS/webpack build. The dataStore format, generated metadata (names, descriptions, expressions), and metadata groups are unchanged and fully compatible with configurations created by earlier versions.
-- Requires DHIS2 2.41 or later; tested on 2.41 and 2.43 (including the 2.42+ global shell).
+- **Migrated to the DHIS2 App Platform** (React 18, TypeScript, `@dhis2/ui`, `@dhis2/app-runtime`, TanStack Query). Replaces the vanilla-JS/webpack build. The dataStore format and metadata groups are unchanged and fully compatible with configurations created by earlier versions.
+- **New configurations use hybrid subExpression templates.** Per configured
+  data element the tool now generates one outlier-threshold predictor + data
+  element and four `subExpression()` indicators — 6 objects instead of up
+  to 20. Consistency and completeness are computed at analytics query time
+  (no scheduled job, no stale intermediate values); only the outlier
+  threshold still needs a predictor job, now a single predictor with no
+  ordering constraints. Requires DHIS2 2.40.2+. Configurations created by
+  the pre-platform tool keep working and remain viewable, editable and
+  removable. See `docs/hybrid-templates.md`.
+- **New "outlier values" indicator**, replacing the outlier-values data
+  element the pre-platform tool maintained with a predictor: it reports the
+  reported value itself whenever it exceeds the threshold and is blank
+  otherwise, so a facility × month pivot lists only the outlying values,
+  and it aggregates to their sum. It uses a factor-1 indicator type (the
+  configuration now requires the instance to have one), so the values are
+  reported as-is rather than ×100.
+- **New default outlier method: modified Z-score** (`median + k·MAD/0.6745`,
+  default k = 3.5, range 2.5–5.0). Mean + k·SD remains available
+  (default 3.0, range 2.0–4.0).
+- One consistent null rule for the generated metrics: blank when the
+  metric's inputs are missing, 0 only when computed and genuinely zero.
+  Fixes the first reported month always showing as 100% outliers, and
+  facilities without 12 months of history dragging aggregated consistency
+  to 0%.
+- Requires DHIS2 2.41 or later; tested on 2.41–2.43 (including the 2.42+ global shell).
 - Build with `pnpm run build`; the installable zip is written to `build/bundle/`.
+- User manual rewritten for the new UI and templates, with screenshots
+  captured on DHIS2 2.43.1.
 
 ### Fixed
 
@@ -20,10 +73,6 @@ All notable changes to this project will be documented in this file.
 - The pre-import conflict check now also works for metadata names containing commas.
 - Names containing `<`, `&` etc. are no longer HTML-escaped in dialogs and notifications.
 - Deleting metadata after an in-app threshold edit now works in every timezone: the edit timestamp is taken from the DHIS2 server rather than the browser clock (DHIS2 returns zone-less dates, so client timestamps skewed the safety check by the timezone offset).
-
-### Documentation
-
-- User manual rewritten against the new UI with regenerated screenshots (DHIS2 2.43).
 
 ### Added
 

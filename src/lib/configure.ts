@@ -4,10 +4,10 @@
 // metadata.
 import { D2Api } from './api'
 import {
-    templateCompleteness,
-    templateCompletenessDisaggregated,
-    templateConsistency,
-    templateOutlier,
+    templateHybridCompleteness,
+    templateHybridConsistency,
+    templateHybridOutlier,
+    thresholdGenerator,
 } from './templates'
 import {
     CheckImport,
@@ -33,6 +33,7 @@ export const generateUids = async (
 // Module-level caches are safe: these ids never change within a session.
 let cachedDefaultCocId: string | null = null
 let cachedPercentIndicatorTypeId: string | null = null
+let cachedNumberIndicatorTypeId: string | null = null
 
 const defaultCocId = async (
     api: D2Api,
@@ -77,6 +78,45 @@ const percentIndicatorTypeId = async (
     }
     cachedPercentIndicatorTypeId = indicatorTypes[0].id
     return cachedPercentIndicatorTypeId
+}
+
+/**
+ * Indicator type with factor 1, for the outlier-values indicator, which
+ * reports the reported value itself rather than a percentage.
+ */
+const numberIndicatorTypeId = async (
+    api: D2Api,
+    onWarning: WarningHandler
+): Promise<string> => {
+    if (cachedNumberIndicatorTypeId) {
+        return cachedNumberIndicatorTypeId
+    }
+    const data = await api.get<{
+        indicatorTypes: { id: string; number: boolean }[]
+    }>('indicatorTypes', {
+        fields: 'id,number',
+        filter: 'factor:eq:1',
+    })
+    const indicatorTypes = data.indicatorTypes
+    if (indicatorTypes.length === 0) {
+        throw new Error(
+            'No indicator type with factor 1 found. The outlier values ' +
+                'indicator needs one (e.g. "Number"); create it in the ' +
+                'Maintenance app and try again.'
+        )
+    }
+    if (indicatorTypes.length > 1) {
+        onWarning(
+            'Duplicate number indicator types found. Using the first match.'
+        )
+    }
+    // A plain number type is the intended match; fall back to any
+    // factor-1 type if the instance labels it differently.
+    const numberType =
+        indicatorTypes.find((indicatorType) => indicatorType.number) ||
+        indicatorTypes[0]
+    cachedNumberIndicatorTypeId = numberType.id
+    return cachedNumberIndicatorTypeId
 }
 
 /** Restrict visibility to the app's admin user group. */
@@ -139,16 +179,21 @@ const truncated = (value: string, maxLength: number): string =>
 const truncatedOutlierShortName = (value: string): string =>
     value.length > 34 ? value.substring(0, 35) : value
 
+export type OutlierMethod = 'modZ' | 'sd'
+
 interface ConfigureInputs {
     dataElement: NamedRef // may be a data element or a data element operand
     dataSet: NamedRef
     ouLevelId: string
-    threshold: string
+    outlierMethod: OutlierMethod
+    threshold: string // the method's k value
     userGroupId: string
 }
 
 interface SystemIds {
     inTypeId: string
+    // factor 1, for the outlier-values indicator
+    inTypeNumberId: string
     cocDefaultId: string
 }
 
@@ -157,32 +202,35 @@ const configureOutlierMetadata = (
     inputs: ConfigureInputs,
     ids: SystemIds
 ): Promise<CheckImport> => {
-    const { inTypeId, cocDefaultId } = ids
+    const { inTypeId, inTypeNumberId, cocDefaultId } = ids
+    const generator = thresholdGenerator(inputs.outlierMethod, inputs.threshold)
+    const methodValueKey =
+        inputs.outlierMethod === 'modZ' ? '§VAL_MODZ§' : '§VAL_STDDEV§'
     const config: PlaceholderConfig = {
+        // Substitution is sequential over the template text: the generator
+        // expression is inserted first and still contains §DE_SOURCE§
+        // tokens, which the later entries then resolve.
+        '§GEN_THRESHOLD§': generator.expression,
+        '§THRESHOLD_DESC§': generator.description,
+        '§MISSING_STRATEGY§': generator.strategy,
         '§NAME§': inputs.dataElement.name,
         '§SHORTNAME§': truncatedOutlierShortName(inputs.dataElement.shortName),
         '§DE_SOURCE§': inputs.dataElement.id,
         '§COC_DEFAULT§': cocDefaultId,
         '§IN_TYPE§': inTypeId,
+        '§IN_TYPE_NUM§': inTypeNumberId,
         '§OU_LEVEL§': inputs.ouLevelId,
-        '§VAL_STDDEV§': inputs.threshold,
-        '§DE_NOUTLIER_COUNT§': false,
-        '§DE_NOUTLIER_VAL§': false,
-        '§DE_OUTLIER_COUNT§': false,
-        '§DE_OUTLIER_VAL§': false,
-        '§DE_THRESHOLD§': false,
-        '§IN_NOUTLIER_PROP§': false,
-        '§IN_OUTLIER_PROP§': false,
-        '§PD_NOUTLIER_COUNT§': false,
-        '§PD_NOUTLIER_VAL§': false,
-        '§PD_OUTLIER_COUNT§': false,
-        '§PD_OUTLIER_VAL§': false,
-        '§PD_THRESHOLD§': false,
+        [methodValueKey]: inputs.threshold,
+        '§DE_THRESHOLD_V2§': false,
+        '§PD_THRESHOLD_V2§': false,
+        '§IN_OUTLIER_PROP_V2§': false,
+        '§IN_NOUTLIER_PROP_V2§': false,
+        '§IN_OUTLIER_VAL_V2§': false,
     }
     return buildFromTemplate(api, {
-        template: templateOutlier(),
+        template: templateHybridOutlier(),
         config,
-        uidCount: 12,
+        uidCount: 5,
         userGroupId: inputs.userGroupId,
     })
 }
@@ -192,24 +240,17 @@ const configureConsistencyMetadata = (
     inputs: ConfigureInputs,
     ids: SystemIds
 ): Promise<CheckImport> => {
-    const { inTypeId, cocDefaultId } = ids
     const config: PlaceholderConfig = {
         '§NAME§': inputs.dataElement.name,
         '§SHORTNAME§': truncated(inputs.dataElement.shortName, 28),
         '§DE_SOURCE§': inputs.dataElement.id,
-        '§IN_TYPE§': inTypeId,
-        '§COC_DEFAULT§': cocDefaultId,
-        '§OU_LEVEL§': inputs.ouLevelId,
-        '§DE_CONS_ALL§': false,
-        '§DE_CONS_ANY§': false,
-        '§IN_CONS_PROP§': false,
-        '§PD_CONS_ALL§': false,
-        '§PD_CONS_ANY§': false,
+        '§IN_TYPE§': ids.inTypeId,
+        '§IN_CONS_PROP_V2§': false,
     }
     return buildFromTemplate(api, {
-        template: templateConsistency(),
+        template: templateHybridConsistency(),
         config,
-        uidCount: 6,
+        uidCount: 1,
         userGroupId: inputs.userGroupId,
     })
 }
@@ -226,39 +267,12 @@ const configureCompletenessMetadata = (
         '§DE_SOURCE§': inputs.dataElement.id,
         '§DS_SOURCE§': inputs.dataSet.id,
         '§IN_TYPE§': inTypeId,
-        '§IN_COMPL§': false,
+        '§IN_COMPL_V2§': false,
     }
     return buildFromTemplate(api, {
-        template: templateCompleteness(),
+        template: templateHybridCompleteness(),
         config,
-        uidCount: 6,
-        userGroupId: inputs.userGroupId,
-    })
-}
-
-const configureCompletenessDisaggregatedMetadata = (
-    api: D2Api,
-    inputs: ConfigureInputs,
-    ids: SystemIds
-): Promise<CheckImport> => {
-    const { inTypeId, cocDefaultId } = ids
-    const config: PlaceholderConfig = {
-        '§NAME§': inputs.dataElement.name,
-        '§SHORTNAME§': truncated(inputs.dataElement.shortName, 30),
-        '§NAME_DS§': inputs.dataSet.name,
-        '§DE_SOURCE§': inputs.dataElement.id,
-        '§DS_SOURCE§': inputs.dataSet.id,
-        '§COC_DEFAULT§': cocDefaultId,
-        '§IN_TYPE§': inTypeId,
-        '§OU_LEVEL§': inputs.ouLevelId,
-        '§DE_COMPL_ANY§': false,
-        '§PD_COMPL_ANY§': false,
-        '§IN_COMPL_ANY§': false,
-    }
-    return buildFromTemplate(api, {
-        template: templateCompletenessDisaggregated(),
-        config,
-        uidCount: 6,
+        uidCount: 1,
         userGroupId: inputs.userGroupId,
     })
 }
@@ -368,7 +382,8 @@ export interface PreviewRequest {
     deSourceId: string
     dataSetId: string
     ouLevelId: string
-    threshold: string
+    outlierMethod: OutlierMethod
+    threshold: string // the outlier method's k value
     completenessApproach: CompletenessApproach
     // operand id to use when completenessApproach === 'proxy'
     proxyOperandId?: string
@@ -411,20 +426,25 @@ export const buildPendingImport = async (
     }
 
     const inTypeId = await percentIndicatorTypeId(api, onWarning)
+    const inTypeNumberId = await numberIndicatorTypeId(api, onWarning)
     const cocId = await defaultCocId(api, onWarning)
 
     const inputs: ConfigureInputs = {
         dataElement,
         dataSet,
         ouLevelId: request.ouLevelId,
+        outlierMethod: request.outlierMethod,
         threshold: request.threshold,
         userGroupId: request.userGroupId,
     }
 
-    const ids: SystemIds = { inTypeId, cocDefaultId: cocId }
+    const ids: SystemIds = { inTypeId, inTypeNumberId, cocDefaultId: cocId }
     const outlier = await configureOutlierMetadata(api, inputs, ids)
     const consistency = await configureConsistencyMetadata(api, inputs, ids)
 
+    // 'standard' and 'anyValue' now share one template: #{DE} inside a
+    // subExpression is the facility total across disaggregations, so
+    // counting facilities with any value needs no separate predictor.
     let completeness
     if (request.completenessApproach === 'proxy') {
         // Use one specific disaggregation (operand) as proxy for the whole DE
@@ -436,12 +456,6 @@ export const buildPendingImport = async (
             api,
             { ...inputs, dataElement: proxyOperand },
             inTypeId
-        )
-    } else if (request.completenessApproach === 'anyValue') {
-        completeness = await configureCompletenessDisaggregatedMetadata(
-            api,
-            inputs,
-            ids
         )
     } else {
         completeness = await configureCompletenessMetadata(

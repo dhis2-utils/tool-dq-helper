@@ -1,431 +1,859 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <title>DQ Config - Design Direction</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #f0f0f3;
-      color: #1d1d1f;
-      line-height: 1.5;
-      padding: 2rem;
-    }
-    .page-title { font-size: 1.4rem; font-weight: 600; text-align: center; margin-bottom: 0.25rem; }
-    .page-subtitle { color: #86868b; text-align: center; margin-bottom: 2rem; font-size: 0.9rem; }
+    <head>
+        <meta charset="utf-8" />
+        <title>DQ Config - Design Direction</title>
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                font-family:
+                    system-ui,
+                    -apple-system,
+                    BlinkMacSystemFont,
+                    sans-serif;
+                background: #f0f0f3;
+                color: #1d1d1f;
+                line-height: 1.5;
+                padding: 2rem;
+            }
+            .page-title {
+                font-size: 1.4rem;
+                font-weight: 600;
+                text-align: center;
+                margin-bottom: 0.25rem;
+            }
+            .page-subtitle {
+                color: #86868b;
+                text-align: center;
+                margin-bottom: 2rem;
+                font-size: 0.9rem;
+            }
 
-    .mockup-section {
-      background: #fff;
-      border: 2px solid #d1d1d6;
-      border-radius: 14px;
-      margin-bottom: 1.5rem;
-      overflow: hidden;
-      cursor: pointer;
-      transition: border-color 0.15s, box-shadow 0.15s;
-    }
-    .mockup-section:hover { border-color: #0071e3; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-    .mockup-section.selected { border-color: #0071e3; box-shadow: 0 4px 20px rgba(0,113,227,0.15); }
+            .mockup-section {
+                background: #fff;
+                border: 2px solid #d1d1d6;
+                border-radius: 14px;
+                margin-bottom: 1.5rem;
+                overflow: hidden;
+                cursor: pointer;
+                transition:
+                    border-color 0.15s,
+                    box-shadow 0.15s;
+            }
+            .mockup-section:hover {
+                border-color: #0071e3;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            }
+            .mockup-section.selected {
+                border-color: #0071e3;
+                box-shadow: 0 4px 20px rgba(0, 113, 227, 0.15);
+            }
 
-    .section-header {
-      display: flex; align-items: center; gap: 0.75rem;
-      padding: 1rem 1.25rem;
-      border-bottom: 1px solid #e5e5e7;
-      background: #fafafa;
-    }
-    .section-header .letter {
-      background: #e5e5e7; color: #86868b;
-      width: 2rem; height: 2rem; border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 0.9rem; flex-shrink: 0;
-    }
-    .mockup-section.selected .section-header .letter { background: #0071e3; color: #fff; }
-    .section-header h3 { font-size: 1rem; font-weight: 600; }
-    .section-header p { font-size: 0.8rem; color: #86868b; margin: 0; }
+            .section-header {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                padding: 1rem 1.25rem;
+                border-bottom: 1px solid #e5e5e7;
+                background: #fafafa;
+            }
+            .section-header .letter {
+                background: #e5e5e7;
+                color: #86868b;
+                width: 2rem;
+                height: 2rem;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+                font-size: 0.9rem;
+                flex-shrink: 0;
+            }
+            .mockup-section.selected .section-header .letter {
+                background: #0071e3;
+                color: #fff;
+            }
+            .section-header h3 {
+                font-size: 1rem;
+                font-weight: 600;
+            }
+            .section-header p {
+                font-size: 0.8rem;
+                color: #86868b;
+                margin: 0;
+            }
 
-    /* ====== MOCKUP A: DHIS2 Design System ====== */
-    .mock-a { font-family: 'Roboto', system-ui, sans-serif; }
-    .mock-a .dhis2-bar {
-      background: #2c6693;
-      color: #fff;
-      padding: 8px 16px;
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .mock-a .dhis2-bar .app-name { font-weight: 500; }
-    .mock-a .dhis2-bar .spacer { flex: 1; }
-    .mock-a .dhis2-bar .avatar {
-      width: 28px; height: 28px; border-radius: 50%;
-      background: rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center;
-      font-size: 11px; font-weight: 600;
-    }
-    .mock-a .app-body { padding: 24px; background: #f4f6f8; }
-    .mock-a .dhis2-tabs {
-      display: flex; gap: 0; border-bottom: 1px solid #d5dde5; margin-bottom: 24px;
-    }
-    .mock-a .dhis2-tab {
-      padding: 10px 20px; font-size: 14px; color: #4a5768; cursor: default;
-      border-bottom: 2px solid transparent; font-weight: 400;
-    }
-    .mock-a .dhis2-tab.active {
-      color: #212934; font-weight: 500;
-      border-bottom-color: #0d47a1;
-    }
-    .mock-a .dhis2-card {
-      background: #fff; border: 1px solid #d5dde5; border-radius: 4px;
-      padding: 20px; margin-bottom: 16px;
-    }
-    .mock-a .dhis2-card h4 { font-size: 15px; color: #212934; margin-bottom: 4px; font-weight: 500; }
-    .mock-a .dhis2-card .meta { font-size: 13px; color: #6e7a8a; margin-bottom: 12px; }
-    .mock-a .dhis2-chips { display: flex; gap: 8px; }
-    .mock-a .dhis2-chip {
-      background: #e8edf2; color: #4a5768; padding: 4px 12px;
-      border-radius: 4px; font-size: 12px; font-weight: 500;
-    }
-    .mock-a .dhis2-chip.active { background: #d5e5f5; color: #0d47a1; }
-    .mock-a .form-group { margin-bottom: 16px; }
-    .mock-a .form-group label { display: block; font-size: 13px; color: #4a5768; margin-bottom: 4px; font-weight: 500; }
-    .mock-a .dhis2-select {
-      width: 100%; padding: 8px 12px; border: 1px solid #a0adba; border-radius: 4px;
-      font-size: 14px; color: #212934; background: #fff; appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5768' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 12px center;
-    }
-    .mock-a .dhis2-select:focus { border-color: #0d47a1; outline: none; box-shadow: 0 0 0 3px rgba(13,71,161,0.1); }
-    .mock-a .dhis2-btn {
-      background: #1565c0; color: #fff; border: none; padding: 8px 24px;
-      border-radius: 4px; font-size: 14px; font-weight: 500; cursor: default;
-    }
-    .mock-a .dhis2-btn:hover { background: #0d47a1; }
-    .mock-a .dhis2-notice {
-      background: #e3f2fd; border-left: 4px solid #1565c0;
-      padding: 12px 16px; border-radius: 0 4px 4px 0;
-      font-size: 13px; color: #212934; margin-bottom: 16px;
-    }
+            /* ====== MOCKUP A: DHIS2 Design System ====== */
+            .mock-a {
+                font-family: 'Roboto', system-ui, sans-serif;
+            }
+            .mock-a .dhis2-bar {
+                background: #2c6693;
+                color: #fff;
+                padding: 8px 16px;
+                font-size: 13px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+            .mock-a .dhis2-bar .app-name {
+                font-weight: 500;
+            }
+            .mock-a .dhis2-bar .spacer {
+                flex: 1;
+            }
+            .mock-a .dhis2-bar .avatar {
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.3);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 11px;
+                font-weight: 600;
+            }
+            .mock-a .app-body {
+                padding: 24px;
+                background: #f4f6f8;
+            }
+            .mock-a .dhis2-tabs {
+                display: flex;
+                gap: 0;
+                border-bottom: 1px solid #d5dde5;
+                margin-bottom: 24px;
+            }
+            .mock-a .dhis2-tab {
+                padding: 10px 20px;
+                font-size: 14px;
+                color: #4a5768;
+                cursor: default;
+                border-bottom: 2px solid transparent;
+                font-weight: 400;
+            }
+            .mock-a .dhis2-tab.active {
+                color: #212934;
+                font-weight: 500;
+                border-bottom-color: #0d47a1;
+            }
+            .mock-a .dhis2-card {
+                background: #fff;
+                border: 1px solid #d5dde5;
+                border-radius: 4px;
+                padding: 20px;
+                margin-bottom: 16px;
+            }
+            .mock-a .dhis2-card h4 {
+                font-size: 15px;
+                color: #212934;
+                margin-bottom: 4px;
+                font-weight: 500;
+            }
+            .mock-a .dhis2-card .meta {
+                font-size: 13px;
+                color: #6e7a8a;
+                margin-bottom: 12px;
+            }
+            .mock-a .dhis2-chips {
+                display: flex;
+                gap: 8px;
+            }
+            .mock-a .dhis2-chip {
+                background: #e8edf2;
+                color: #4a5768;
+                padding: 4px 12px;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: 500;
+            }
+            .mock-a .dhis2-chip.active {
+                background: #d5e5f5;
+                color: #0d47a1;
+            }
+            .mock-a .form-group {
+                margin-bottom: 16px;
+            }
+            .mock-a .form-group label {
+                display: block;
+                font-size: 13px;
+                color: #4a5768;
+                margin-bottom: 4px;
+                font-weight: 500;
+            }
+            .mock-a .dhis2-select {
+                width: 100%;
+                padding: 8px 12px;
+                border: 1px solid #a0adba;
+                border-radius: 4px;
+                font-size: 14px;
+                color: #212934;
+                background: #fff;
+                appearance: none;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5768' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: right 12px center;
+            }
+            .mock-a .dhis2-select:focus {
+                border-color: #0d47a1;
+                outline: none;
+                box-shadow: 0 0 0 3px rgba(13, 71, 161, 0.1);
+            }
+            .mock-a .dhis2-btn {
+                background: #1565c0;
+                color: #fff;
+                border: none;
+                padding: 8px 24px;
+                border-radius: 4px;
+                font-size: 14px;
+                font-weight: 500;
+                cursor: default;
+            }
+            .mock-a .dhis2-btn:hover {
+                background: #0d47a1;
+            }
+            .mock-a .dhis2-notice {
+                background: #e3f2fd;
+                border-left: 4px solid #1565c0;
+                padding: 12px 16px;
+                border-radius: 0 4px 4px 0;
+                font-size: 13px;
+                color: #212934;
+                margin-bottom: 16px;
+            }
 
-    /* ====== MOCKUP B: Modern Admin ====== */
-    .mock-b { font-family: 'Inter', system-ui, sans-serif; }
-    .mock-b .admin-bar {
-      background: #1e293b;
-      color: #e2e8f0;
-      padding: 10px 20px;
-      font-size: 13px;
-      display: flex; align-items: center; gap: 16px;
-    }
-    .mock-b .admin-bar .logo { font-weight: 700; color: #fff; font-size: 14px; }
-    .mock-b .admin-bar .spacer { flex: 1; }
-    .mock-b .admin-bar .badge {
-      background: #3b82f6; color: #fff; padding: 2px 8px;
-      border-radius: 12px; font-size: 11px; font-weight: 600;
-    }
-    .mock-b .app-body { padding: 28px; background: #f8fafc; }
-    .mock-b .page-head {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 24px;
-    }
-    .mock-b .page-head h2 { font-size: 20px; font-weight: 700; color: #0f172a; }
-    .mock-b .page-head .pill-tabs { display: flex; gap: 4px; background: #e2e8f0; padding: 3px; border-radius: 8px; }
-    .mock-b .pill-tab {
-      padding: 6px 16px; border-radius: 6px; font-size: 13px; color: #64748b;
-      cursor: default; font-weight: 500;
-    }
-    .mock-b .pill-tab.active { background: #fff; color: #0f172a; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .mock-b .admin-card {
-      background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
-      padding: 24px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    }
-    .mock-b .admin-card h4 { font-size: 15px; font-weight: 600; color: #0f172a; margin-bottom: 4px; }
-    .mock-b .admin-card .meta { font-size: 13px; color: #94a3b8; margin-bottom: 14px; }
-    .mock-b .status-dots { display: flex; gap: 10px; }
-    .mock-b .status-dot {
-      display: flex; align-items: center; gap: 5px;
-      font-size: 12px; color: #64748b; font-weight: 500;
-    }
-    .mock-b .status-dot::before {
-      content: ''; width: 8px; height: 8px; border-radius: 50%;
-    }
-    .mock-b .status-dot.green::before { background: #22c55e; }
-    .mock-b .status-dot.blue::before { background: #3b82f6; }
-    .mock-b .status-dot.amber::before { background: #f59e0b; }
-    .mock-b .form-group { margin-bottom: 18px; }
-    .mock-b .form-group label { display: block; font-size: 13px; color: #475569; margin-bottom: 6px; font-weight: 600; }
-    .mock-b .admin-select {
-      width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px;
-      font-size: 14px; color: #0f172a; background: #fff;
-      transition: border-color 0.15s, box-shadow 0.15s;
-    }
-    .mock-b .admin-select:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
-    .mock-b .admin-btn {
-      background: #3b82f6; color: #fff; border: none; padding: 10px 28px;
-      border-radius: 8px; font-size: 14px; font-weight: 600; cursor: default;
-    }
-    .mock-b .admin-btn:hover { background: #2563eb; }
+            /* ====== MOCKUP B: Modern Admin ====== */
+            .mock-b {
+                font-family: 'Inter', system-ui, sans-serif;
+            }
+            .mock-b .admin-bar {
+                background: #1e293b;
+                color: #e2e8f0;
+                padding: 10px 20px;
+                font-size: 13px;
+                display: flex;
+                align-items: center;
+                gap: 16px;
+            }
+            .mock-b .admin-bar .logo {
+                font-weight: 700;
+                color: #fff;
+                font-size: 14px;
+            }
+            .mock-b .admin-bar .spacer {
+                flex: 1;
+            }
+            .mock-b .admin-bar .badge {
+                background: #3b82f6;
+                color: #fff;
+                padding: 2px 8px;
+                border-radius: 12px;
+                font-size: 11px;
+                font-weight: 600;
+            }
+            .mock-b .app-body {
+                padding: 28px;
+                background: #f8fafc;
+            }
+            .mock-b .page-head {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 24px;
+            }
+            .mock-b .page-head h2 {
+                font-size: 20px;
+                font-weight: 700;
+                color: #0f172a;
+            }
+            .mock-b .page-head .pill-tabs {
+                display: flex;
+                gap: 4px;
+                background: #e2e8f0;
+                padding: 3px;
+                border-radius: 8px;
+            }
+            .mock-b .pill-tab {
+                padding: 6px 16px;
+                border-radius: 6px;
+                font-size: 13px;
+                color: #64748b;
+                cursor: default;
+                font-weight: 500;
+            }
+            .mock-b .pill-tab.active {
+                background: #fff;
+                color: #0f172a;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+            .mock-b .admin-card {
+                background: #fff;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 24px;
+                margin-bottom: 16px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            }
+            .mock-b .admin-card h4 {
+                font-size: 15px;
+                font-weight: 600;
+                color: #0f172a;
+                margin-bottom: 4px;
+            }
+            .mock-b .admin-card .meta {
+                font-size: 13px;
+                color: #94a3b8;
+                margin-bottom: 14px;
+            }
+            .mock-b .status-dots {
+                display: flex;
+                gap: 10px;
+            }
+            .mock-b .status-dot {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                font-size: 12px;
+                color: #64748b;
+                font-weight: 500;
+            }
+            .mock-b .status-dot::before {
+                content: '';
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+            }
+            .mock-b .status-dot.green::before {
+                background: #22c55e;
+            }
+            .mock-b .status-dot.blue::before {
+                background: #3b82f6;
+            }
+            .mock-b .status-dot.amber::before {
+                background: #f59e0b;
+            }
+            .mock-b .form-group {
+                margin-bottom: 18px;
+            }
+            .mock-b .form-group label {
+                display: block;
+                font-size: 13px;
+                color: #475569;
+                margin-bottom: 6px;
+                font-weight: 600;
+            }
+            .mock-b .admin-select {
+                width: 100%;
+                padding: 10px 14px;
+                border: 1px solid #cbd5e1;
+                border-radius: 8px;
+                font-size: 14px;
+                color: #0f172a;
+                background: #fff;
+                transition:
+                    border-color 0.15s,
+                    box-shadow 0.15s;
+            }
+            .mock-b .admin-select:focus {
+                border-color: #3b82f6;
+                outline: none;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            }
+            .mock-b .admin-btn {
+                background: #3b82f6;
+                color: #fff;
+                border: none;
+                padding: 10px 28px;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: default;
+            }
+            .mock-b .admin-btn:hover {
+                background: #2563eb;
+            }
 
-    /* ====== MOCKUP C: Minimal Refresh ====== */
-    .mock-c { font-family: system-ui, sans-serif; }
-    .mock-c .header-bar {
-      background: #2c6693;
-      color: #fff;
-      padding: 8px 16px;
-      font-size: 13px;
-    }
-    .mock-c .app-body { padding: 20px; background: #fff; }
-    .mock-c .simple-tabs {
-      display: flex; gap: 0; border-bottom: 2px solid #e5e7eb; margin-bottom: 20px;
-    }
-    .mock-c .simple-tab {
-      padding: 8px 18px; font-size: 14px; color: #6b7280; cursor: default;
-      border-bottom: 2px solid transparent; margin-bottom: -2px;
-    }
-    .mock-c .simple-tab.active { color: #111827; border-bottom-color: #2563eb; font-weight: 500; }
-    .mock-c h1 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
-    .mock-c .form-hint { font-size: 13px; color: #6b7280; margin-bottom: 18px; }
-    .mock-c .form-group { margin-bottom: 14px; }
-    .mock-c .form-group label { display: block; font-size: 13px; color: #374151; margin-bottom: 4px; }
-    .mock-c .simple-select {
-      width: 100%; max-width: 600px; padding: 8px 10px; border: 1px solid #d1d5db;
-      border-radius: 4px; font-size: 14px; color: #111827; background: #fff;
-    }
-    .mock-c .simple-btn {
-      background: #2563eb; color: #fff; border: none; padding: 8px 20px;
-      border-radius: 4px; font-size: 14px; cursor: default;
-    }
-    .mock-c .config-item {
-      border: 1px solid #e5e7eb; border-radius: 6px; padding: 14px;
-      margin-bottom: 10px;
-    }
-    .mock-c .config-item h4 { font-size: 14px; margin-bottom: 2px; }
-    .mock-c .config-item .meta { font-size: 12px; color: #6b7280; }
+            /* ====== MOCKUP C: Minimal Refresh ====== */
+            .mock-c {
+                font-family: system-ui, sans-serif;
+            }
+            .mock-c .header-bar {
+                background: #2c6693;
+                color: #fff;
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+            .mock-c .app-body {
+                padding: 20px;
+                background: #fff;
+            }
+            .mock-c .simple-tabs {
+                display: flex;
+                gap: 0;
+                border-bottom: 2px solid #e5e7eb;
+                margin-bottom: 20px;
+            }
+            .mock-c .simple-tab {
+                padding: 8px 18px;
+                font-size: 14px;
+                color: #6b7280;
+                cursor: default;
+                border-bottom: 2px solid transparent;
+                margin-bottom: -2px;
+            }
+            .mock-c .simple-tab.active {
+                color: #111827;
+                border-bottom-color: #2563eb;
+                font-weight: 500;
+            }
+            .mock-c h1 {
+                font-size: 18px;
+                font-weight: 600;
+                margin-bottom: 4px;
+            }
+            .mock-c .form-hint {
+                font-size: 13px;
+                color: #6b7280;
+                margin-bottom: 18px;
+            }
+            .mock-c .form-group {
+                margin-bottom: 14px;
+            }
+            .mock-c .form-group label {
+                display: block;
+                font-size: 13px;
+                color: #374151;
+                margin-bottom: 4px;
+            }
+            .mock-c .simple-select {
+                width: 100%;
+                max-width: 600px;
+                padding: 8px 10px;
+                border: 1px solid #d1d5db;
+                border-radius: 4px;
+                font-size: 14px;
+                color: #111827;
+                background: #fff;
+            }
+            .mock-c .simple-btn {
+                background: #2563eb;
+                color: #fff;
+                border: none;
+                padding: 8px 20px;
+                border-radius: 4px;
+                font-size: 14px;
+                cursor: default;
+            }
+            .mock-c .config-item {
+                border: 1px solid #e5e7eb;
+                border-radius: 6px;
+                padding: 14px;
+                margin-bottom: 10px;
+            }
+            .mock-c .config-item h4 {
+                font-size: 14px;
+                margin-bottom: 2px;
+            }
+            .mock-c .config-item .meta {
+                font-size: 12px;
+                color: #6b7280;
+            }
 
-    /* Selection indicator */
-    .indicator-bar {
-      background: #fff;
-      border: 1px solid #d1d1d6;
-      border-radius: 8px;
-      padding: 0.75rem 1.5rem;
-      margin-top: 1rem;
-      text-align: center;
-      position: sticky;
-      bottom: 1rem;
-    }
-    .indicator-bar span { font-size: 0.8rem; color: #86868b; }
-    .indicator-bar .selected-text { color: #0071e3; font-weight: 600; }
-  </style>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-</head>
-<body>
+            /* Selection indicator */
+            .indicator-bar {
+                background: #fff;
+                border: 1px solid #d1d1d6;
+                border-radius: 8px;
+                padding: 0.75rem 1.5rem;
+                margin-top: 1rem;
+                text-align: center;
+                position: sticky;
+                bottom: 1rem;
+            }
+            .indicator-bar span {
+                font-size: 0.8rem;
+                color: #86868b;
+            }
+            .indicator-bar .selected-text {
+                color: #0071e3;
+                font-weight: 600;
+            }
+        </style>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Inter:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+    </head>
+    <body>
+        <h2 class="page-title">DQ Config App &mdash; Design Direction</h2>
+        <p class="page-subtitle">
+            Click the mockup that feels right. Each shows the same app under a
+            different visual approach.
+        </p>
 
-  <h2 class="page-title">DQ Config App &mdash; Design Direction</h2>
-  <p class="page-subtitle">Click the mockup that feels right. Each shows the same app under a different visual approach.</p>
-
-  <!-- ====== OPTION A: DHIS2 Design System ====== -->
-  <div class="mockup-section" data-choice="a" onclick="toggleSelect(this)">
-    <div class="section-header">
-      <div class="letter">A</div>
-      <div>
-        <h3>DHIS2 Design System CSS</h3>
-        <p>Faithful match of DHIS2 colors, Roboto font, component patterns. Looks native to the DHIS2 ecosystem.</p>
-      </div>
-    </div>
-    <div class="mock-a">
-      <div class="dhis2-bar">
-        <svg width="21" height="21" viewBox="0 0 21 21" fill="none"><circle cx="10.5" cy="10.5" r="10.5" fill="rgba(255,255,255,0.2)"/><path d="M6 7h9M6 10.5h9M6 14h9" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
-        <span class="app-name">DQ Metrics Configuration Tool</span>
-        <span class="spacer"></span>
-        <div class="avatar">AS</div>
-      </div>
-      <div class="app-body">
-        <div class="dhis2-tabs">
-          <div class="dhis2-tab active">Add new</div>
-          <div class="dhis2-tab">Configuration</div>
-          <div class="dhis2-tab">Instructions</div>
-        </div>
-        <div class="dhis2-notice">All fields are required. Select a data set to begin configuring data quality metrics.</div>
-        <div class="form-group">
-          <label>Data set</label>
-          <select class="dhis2-select"><option>Malaria Monthly Report</option></select>
-        </div>
-        <div class="form-group">
-          <label>Data element</label>
-          <select class="dhis2-select"><option>Malaria cases confirmed (default)</option></select>
-        </div>
-        <div class="form-group">
-          <label>Organisation unit level</label>
-          <select class="dhis2-select"><option>Level 4 - Facility</option></select>
-        </div>
-        <div class="form-group">
-          <label>Standard deviations for outlier threshold</label>
-          <select class="dhis2-select"><option>3.0</option></select>
-        </div>
-        <div style="margin-top: 20px;">
-          <button class="dhis2-btn">Preview</button>
-        </div>
-
-        <div style="margin-top: 28px; border-top: 1px solid #d5dde5; padding-top: 20px;">
-          <div style="font-size: 13px; color: #6e7a8a; margin-bottom: 12px; font-weight: 500;">CONFIGURED ELEMENTS</div>
-          <div class="dhis2-card">
-            <h4>Malaria cases confirmed</h4>
-            <div class="meta">Data Set: Malaria Monthly Report &middot; ID: aBc12eFgHiJ</div>
-            <div class="dhis2-chips">
-              <span class="dhis2-chip active">Outliers (3.0 SD)</span>
-              <span class="dhis2-chip active">Consistency</span>
-              <span class="dhis2-chip active">Completeness</span>
+        <!-- ====== OPTION A: DHIS2 Design System ====== -->
+        <div
+            class="mockup-section"
+            data-choice="a"
+            onclick="toggleSelect(this)"
+        >
+            <div class="section-header">
+                <div class="letter">A</div>
+                <div>
+                    <h3>DHIS2 Design System CSS</h3>
+                    <p>
+                        Faithful match of DHIS2 colors, Roboto font, component
+                        patterns. Looks native to the DHIS2 ecosystem.
+                    </p>
+                </div>
             </div>
-          </div>
-          <div class="dhis2-card">
-            <h4>ANC 1st visit</h4>
-            <div class="meta">Data Set: ANC Monthly &middot; ID: xYz98wVuTsR</div>
-            <div class="dhis2-chips">
-              <span class="dhis2-chip active">Outliers (2.5 SD)</span>
-              <span class="dhis2-chip active">Consistency</span>
-              <span class="dhis2-chip">Completeness</span>
+            <div class="mock-a">
+                <div class="dhis2-bar">
+                    <svg width="21" height="21" viewBox="0 0 21 21" fill="none">
+                        <circle
+                            cx="10.5"
+                            cy="10.5"
+                            r="10.5"
+                            fill="rgba(255,255,255,0.2)"
+                        />
+                        <path
+                            d="M6 7h9M6 10.5h9M6 14h9"
+                            stroke="#fff"
+                            stroke-width="1.5"
+                            stroke-linecap="round"
+                        />
+                    </svg>
+                    <span class="app-name">DQ Metrics Configuration Tool</span>
+                    <span class="spacer"></span>
+                    <div class="avatar">AS</div>
+                </div>
+                <div class="app-body">
+                    <div class="dhis2-tabs">
+                        <div class="dhis2-tab active">Add new</div>
+                        <div class="dhis2-tab">Configuration</div>
+                        <div class="dhis2-tab">Instructions</div>
+                    </div>
+                    <div class="dhis2-notice">
+                        All fields are required. Select a data set to begin
+                        configuring data quality metrics.
+                    </div>
+                    <div class="form-group">
+                        <label>Data set</label>
+                        <select class="dhis2-select">
+                            <option>Malaria Monthly Report</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Data element</label>
+                        <select class="dhis2-select">
+                            <option>Malaria cases confirmed (default)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Organisation unit level</label>
+                        <select class="dhis2-select">
+                            <option>Level 4 - Facility</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Standard deviations for outlier threshold</label>
+                        <select class="dhis2-select">
+                            <option>3.0</option>
+                        </select>
+                    </div>
+                    <div style="margin-top: 20px">
+                        <button class="dhis2-btn">Preview</button>
+                    </div>
+
+                    <div
+                        style="
+                            margin-top: 28px;
+                            border-top: 1px solid #d5dde5;
+                            padding-top: 20px;
+                        "
+                    >
+                        <div
+                            style="
+                                font-size: 13px;
+                                color: #6e7a8a;
+                                margin-bottom: 12px;
+                                font-weight: 500;
+                            "
+                        >
+                            CONFIGURED ELEMENTS
+                        </div>
+                        <div class="dhis2-card">
+                            <h4>Malaria cases confirmed</h4>
+                            <div class="meta">
+                                Data Set: Malaria Monthly Report &middot; ID:
+                                aBc12eFgHiJ
+                            </div>
+                            <div class="dhis2-chips">
+                                <span class="dhis2-chip active"
+                                    >Outliers (3.0 SD)</span
+                                >
+                                <span class="dhis2-chip active"
+                                    >Consistency</span
+                                >
+                                <span class="dhis2-chip active"
+                                    >Completeness</span
+                                >
+                            </div>
+                        </div>
+                        <div class="dhis2-card">
+                            <h4>ANC 1st visit</h4>
+                            <div class="meta">
+                                Data Set: ANC Monthly &middot; ID: xYz98wVuTsR
+                            </div>
+                            <div class="dhis2-chips">
+                                <span class="dhis2-chip active"
+                                    >Outliers (2.5 SD)</span
+                                >
+                                <span class="dhis2-chip active"
+                                    >Consistency</span
+                                >
+                                <span class="dhis2-chip">Completeness</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- ====== OPTION B: Modern Admin ====== -->
-  <div class="mockup-section" data-choice="b" onclick="toggleSelect(this)">
-    <div class="section-header">
-      <div class="letter">B</div>
-      <div>
-        <h3>Modern Admin Tool</h3>
-        <p>Clean, modern interface. Compatible with DHIS2 but not a pixel-perfect copy. Rounded corners, generous spacing.</p>
-      </div>
-    </div>
-    <div class="mock-b">
-      <div class="admin-bar">
-        <span class="logo">DQ Config</span>
-        <span class="spacer"></span>
-        <span class="badge">v0.1.7</span>
-      </div>
-      <div class="app-body">
-        <div class="page-head">
-          <h2>Configure Metrics</h2>
-          <div class="pill-tabs">
-            <div class="pill-tab active">Add new</div>
-            <div class="pill-tab">Configuration</div>
-            <div class="pill-tab">Instructions</div>
-          </div>
-        </div>
-        <div class="admin-card">
-          <div class="form-group">
-            <label>Data set</label>
-            <select class="admin-select"><option>Malaria Monthly Report</option></select>
-          </div>
-          <div class="form-group">
-            <label>Data element</label>
-            <select class="admin-select"><option>Malaria cases confirmed (default)</option></select>
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-            <div class="form-group">
-              <label>Organisation unit level</label>
-              <select class="admin-select"><option>Level 4 - Facility</option></select>
+        <!-- ====== OPTION B: Modern Admin ====== -->
+        <div
+            class="mockup-section"
+            data-choice="b"
+            onclick="toggleSelect(this)"
+        >
+            <div class="section-header">
+                <div class="letter">B</div>
+                <div>
+                    <h3>Modern Admin Tool</h3>
+                    <p>
+                        Clean, modern interface. Compatible with DHIS2 but not a
+                        pixel-perfect copy. Rounded corners, generous spacing.
+                    </p>
+                </div>
             </div>
-            <div class="form-group">
-              <label>Outlier threshold (SD)</label>
-              <select class="admin-select"><option>3.0</option></select>
+            <div class="mock-b">
+                <div class="admin-bar">
+                    <span class="logo">DQ Config</span>
+                    <span class="spacer"></span>
+                    <span class="badge">v0.1.7</span>
+                </div>
+                <div class="app-body">
+                    <div class="page-head">
+                        <h2>Configure Metrics</h2>
+                        <div class="pill-tabs">
+                            <div class="pill-tab active">Add new</div>
+                            <div class="pill-tab">Configuration</div>
+                            <div class="pill-tab">Instructions</div>
+                        </div>
+                    </div>
+                    <div class="admin-card">
+                        <div class="form-group">
+                            <label>Data set</label>
+                            <select class="admin-select">
+                                <option>Malaria Monthly Report</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Data element</label>
+                            <select class="admin-select">
+                                <option>
+                                    Malaria cases confirmed (default)
+                                </option>
+                            </select>
+                        </div>
+                        <div
+                            style="
+                                display: grid;
+                                grid-template-columns: 1fr 1fr;
+                                gap: 16px;
+                            "
+                        >
+                            <div class="form-group">
+                                <label>Organisation unit level</label>
+                                <select class="admin-select">
+                                    <option>Level 4 - Facility</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Outlier threshold (SD)</label>
+                                <select class="admin-select">
+                                    <option>3.0</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="margin-top: 8px">
+                            <button class="admin-btn">
+                                Preview Configuration
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 8px">
+                        <div
+                            style="
+                                font-size: 12px;
+                                color: #94a3b8;
+                                font-weight: 600;
+                                text-transform: uppercase;
+                                letter-spacing: 0.05em;
+                                margin-bottom: 12px;
+                            "
+                        >
+                            Configured Elements
+                        </div>
+                        <div class="admin-card">
+                            <h4>Malaria cases confirmed</h4>
+                            <div class="meta">
+                                Malaria Monthly Report &middot; aBc12eFgHiJ
+                            </div>
+                            <div class="status-dots">
+                                <span class="status-dot green"
+                                    >Outliers (3.0 SD)</span
+                                >
+                                <span class="status-dot blue">Consistency</span>
+                                <span class="status-dot green"
+                                    >Completeness</span
+                                >
+                            </div>
+                        </div>
+                        <div class="admin-card">
+                            <h4>ANC 1st visit</h4>
+                            <div class="meta">
+                                ANC Monthly &middot; xYz98wVuTsR
+                            </div>
+                            <div class="status-dots">
+                                <span class="status-dot green"
+                                    >Outliers (2.5 SD)</span
+                                >
+                                <span class="status-dot blue">Consistency</span>
+                                <span class="status-dot amber"
+                                    >Completeness</span
+                                >
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-          <div style="margin-top: 8px;">
-            <button class="admin-btn">Preview Configuration</button>
-          </div>
         </div>
 
-        <div style="margin-top: 8px;">
-          <div style="font-size: 12px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;">Configured Elements</div>
-          <div class="admin-card">
-            <h4>Malaria cases confirmed</h4>
-            <div class="meta">Malaria Monthly Report &middot; aBc12eFgHiJ</div>
-            <div class="status-dots">
-              <span class="status-dot green">Outliers (3.0 SD)</span>
-              <span class="status-dot blue">Consistency</span>
-              <span class="status-dot green">Completeness</span>
+        <!-- ====== OPTION C: Minimal Refresh ====== -->
+        <div
+            class="mockup-section"
+            data-choice="c"
+            onclick="toggleSelect(this)"
+        >
+            <div class="section-header">
+                <div class="letter">C</div>
+                <div>
+                    <h3>Minimal Refresh</h3>
+                    <p>
+                        Same layout, stripped of jQuery UI. Modern fonts,
+                        cleaner spacing, styled buttons. Lowest effort.
+                    </p>
+                </div>
             </div>
-          </div>
-          <div class="admin-card">
-            <h4>ANC 1st visit</h4>
-            <div class="meta">ANC Monthly &middot; xYz98wVuTsR</div>
-            <div class="status-dots">
-              <span class="status-dot green">Outliers (2.5 SD)</span>
-              <span class="status-dot blue">Consistency</span>
-              <span class="status-dot amber">Completeness</span>
+            <div class="mock-c">
+                <div class="header-bar">DQ Metrics Configuration Tool</div>
+                <div class="app-body">
+                    <div class="simple-tabs">
+                        <div class="simple-tab active">Add new</div>
+                        <div class="simple-tab">Configuration</div>
+                        <div class="simple-tab">Instructions</div>
+                    </div>
+                    <h1>Configure and create data quality metadata</h1>
+                    <p class="form-hint">All fields are required!</p>
+                    <div class="form-group">
+                        <label>Data set - used to filter data elements</label>
+                        <select class="simple-select">
+                            <option>Malaria Monthly Report</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label
+                            >Data element to configure data quality metrics
+                            for</label
+                        >
+                        <select class="simple-select">
+                            <option>Malaria cases confirmed (default)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Orgunit level at which data is collected</label>
+                        <select class="simple-select">
+                            <option>Level 4 - Facility</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label
+                            >Outliers: Standard deviations from the mean to use
+                            as outlier threshold</label
+                        >
+                        <select class="simple-select">
+                            <option>3.0</option>
+                        </select>
+                    </div>
+                    <button class="simple-btn" style="margin-top: 6px">
+                        Preview
+                    </button>
+
+                    <div
+                        style="
+                            margin-top: 24px;
+                            border-top: 1px solid #e5e7eb;
+                            padding-top: 16px;
+                        "
+                    >
+                        <div class="config-item">
+                            <h4>Malaria cases confirmed</h4>
+                            <div class="meta">
+                                Malaria Monthly Report &middot; Outliers (3.0
+                                SD) &middot; Consistency &middot; Completeness
+                            </div>
+                        </div>
+                        <div class="config-item">
+                            <h4>ANC 1st visit</h4>
+                            <div class="meta">
+                                ANC Monthly &middot; Outliers (2.5 SD) &middot;
+                                Consistency
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- ====== OPTION C: Minimal Refresh ====== -->
-  <div class="mockup-section" data-choice="c" onclick="toggleSelect(this)">
-    <div class="section-header">
-      <div class="letter">C</div>
-      <div>
-        <h3>Minimal Refresh</h3>
-        <p>Same layout, stripped of jQuery UI. Modern fonts, cleaner spacing, styled buttons. Lowest effort.</p>
-      </div>
-    </div>
-    <div class="mock-c">
-      <div class="header-bar">DQ Metrics Configuration Tool</div>
-      <div class="app-body">
-        <div class="simple-tabs">
-          <div class="simple-tab active">Add new</div>
-          <div class="simple-tab">Configuration</div>
-          <div class="simple-tab">Instructions</div>
+        <div class="indicator-bar">
+            <span id="indicator-text"
+                >Click a mockup above, then tell me your choice in the
+                terminal</span
+            >
         </div>
-        <h1>Configure and create data quality metadata</h1>
-        <p class="form-hint">All fields are required!</p>
-        <div class="form-group">
-          <label>Data set - used to filter data elements</label>
-          <select class="simple-select"><option>Malaria Monthly Report</option></select>
-        </div>
-        <div class="form-group">
-          <label>Data element to configure data quality metrics for</label>
-          <select class="simple-select"><option>Malaria cases confirmed (default)</option></select>
-        </div>
-        <div class="form-group">
-          <label>Orgunit level at which data is collected</label>
-          <select class="simple-select"><option>Level 4 - Facility</option></select>
-        </div>
-        <div class="form-group">
-          <label>Outliers: Standard deviations from the mean to use as outlier threshold</label>
-          <select class="simple-select"><option>3.0</option></select>
-        </div>
-        <button class="simple-btn" style="margin-top: 6px;">Preview</button>
 
-        <div style="margin-top: 24px; border-top: 1px solid #e5e7eb; padding-top: 16px;">
-          <div class="config-item">
-            <h4>Malaria cases confirmed</h4>
-            <div class="meta">Malaria Monthly Report &middot; Outliers (3.0 SD) &middot; Consistency &middot; Completeness</div>
-          </div>
-          <div class="config-item">
-            <h4>ANC 1st visit</h4>
-            <div class="meta">ANC Monthly &middot; Outliers (2.5 SD) &middot; Consistency</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="indicator-bar">
-    <span id="indicator-text">Click a mockup above, then tell me your choice in the terminal</span>
-  </div>
-
-  <script>
-    function toggleSelect(el) {
-      document.querySelectorAll('.mockup-section').forEach(o => o.classList.remove('selected'));
-      el.classList.add('selected');
-      var choice = el.dataset.choice;
-      var title = el.querySelector('.section-header h3').textContent;
-      document.getElementById('indicator-text').innerHTML =
-        'Selected: <span class="selected-text">' + choice.toUpperCase() + ' &mdash; ' + title + '</span>';
-    }
-  </script>
-</body>
+        <script>
+            function toggleSelect(el) {
+                document
+                    .querySelectorAll('.mockup-section')
+                    .forEach((o) => o.classList.remove('selected'))
+                el.classList.add('selected')
+                var choice = el.dataset.choice
+                var title = el.querySelector('.section-header h3').textContent
+                document.getElementById('indicator-text').innerHTML =
+                    'Selected: <span class="selected-text">' +
+                    choice.toUpperCase() +
+                    ' &mdash; ' +
+                    title +
+                    '</span>'
+            }
+        </script>
+    </body>
 </html>

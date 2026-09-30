@@ -10,6 +10,7 @@ const baseRequest: PreviewRequest = {
     deSourceId: DE_ID,
     dataSetId: DS_ID,
     ouLevelId: 'OuLevel0001',
+    outlierMethod: 'sd',
     threshold: '3.5',
     completenessApproach: 'standard',
     userGroupId: USER_GROUP,
@@ -53,7 +54,15 @@ const makeApi = (overrides?: {
                 }
             }
             if (resource === 'indicatorTypes') {
-                return { indicatorTypes: [{ id: 'IndType0001' }] }
+                // The app looks up two types: percentage (factor 100) for
+                // the three ratio metrics, and factor 1 for outlier values
+                // "factor:eq:1" exactly — not the "factor:eq:100" of the
+                // percentage lookup, which shares the prefix
+                return /factor:eq:1(?!\d)/.test(String(params?.filter))
+                    ? {
+                          indicatorTypes: [{ id: 'IndTypeNum1', number: true }],
+                      }
+                    : { indicatorTypes: [{ id: 'IndType0001' }] }
             }
             if (resource === 'categoryOptionCombos') {
                 return { categoryOptionCombos: [{ id: 'DefaultCoc1' }] }
@@ -99,15 +108,38 @@ describe('buildPendingImport', () => {
         const { api } = makeApi()
         const pending = await buildPendingImport(api, baseRequest, () => {})
 
-        expect(pending.outlier.metadata.dataElements).toHaveLength(5)
-        expect(pending.outlier.metadata.predictors).toHaveLength(5)
-        expect(pending.outlier.metadata.indicators).toHaveLength(2)
-        expect(pending.consistency.metadata.dataElements).toHaveLength(2)
-        expect(pending.consistency.metadata.predictors).toHaveLength(2)
+        // V2 hybrid: one threshold DE + one threshold predictor, all
+        // metrics are indicators
+        expect(pending.outlier.metadata.dataElements).toHaveLength(1)
+        expect(pending.outlier.metadata.predictors).toHaveLength(1)
+        expect(pending.outlier.metadata.indicators).toHaveLength(3)
+        expect(pending.consistency.metadata.dataElements).toBeUndefined()
+        expect(pending.consistency.metadata.predictors).toBeUndefined()
         expect(pending.consistency.metadata.indicators).toHaveLength(1)
-        // Standard completeness is a single indicator
         expect(pending.completeness.metadata.dataElements).toBeUndefined()
         expect(pending.completeness.metadata.indicators).toHaveLength(1)
+    })
+
+    it('gives the outlier values indicator a factor-1 type and a non-summing denominator', async () => {
+        const { api } = makeApi()
+        const pending = await buildPendingImport(api, baseRequest, () => {})
+
+        const values = (pending.outlier.metadata.indicators || []).find(
+            (indicator) => indicator.name?.endsWith('outlier values')
+        )
+        expect(values).toBeDefined()
+        // A percentage type (factor 100) would report the value x100
+        expect(values?.indicatorType).toEqual({ id: 'IndTypeNum1' })
+        // aggregationType(MAX) keeps the denominator at 1 when aggregating,
+        // so higher levels sum the outlying values instead of averaging them
+        expect(values?.denominator).toContain('.aggregationType(MAX)')
+        expect(values?.numerator).toContain(`#{${DE_ID}}`)
+        // The other two outlier indicators stay percentages
+        for (const indicator of pending.outlier.metadata.indicators || []) {
+            if (indicator.name?.endsWith('(%)')) {
+                expect(indicator.indicatorType).toEqual({ id: 'IndType0001' })
+            }
+        }
     })
 
     it('embeds the threshold in generated names and expressions', async () => {
@@ -154,16 +186,52 @@ describe('buildPendingImport', () => {
         expect(indicator.numerator).toContain(`#{${DE_ID}.Coc00000001}`)
     })
 
-    it('generates DE + predictor + indicator for the any-value approach', async () => {
+    it('uses the plain subExpression indicator for the any-value approach', async () => {
         const { api } = makeApi()
         const pending = await buildPendingImport(
             api,
             { ...baseRequest, completenessApproach: 'anyValue' },
             () => {}
         )
-        expect(pending.completeness.metadata.dataElements).toHaveLength(1)
-        expect(pending.completeness.metadata.predictors).toHaveLength(1)
-        expect(pending.completeness.metadata.indicators).toHaveLength(1)
+        // #{DE} inside a subExpression is the facility total across
+        // disaggregations, so no predictor/DE is needed any more
+        expect(pending.completeness.metadata.dataElements).toBeUndefined()
+        expect(pending.completeness.metadata.predictors).toBeUndefined()
+        const indicator = (pending.completeness.metadata.indicators || [])[0]
+        expect(indicator.numerator).toBe(
+            `subExpression(if(isNotNull(#{${DE_ID}}), 1, 0))`
+        )
+    })
+
+    it('builds the modified-Z threshold when requested', async () => {
+        const { api } = makeApi()
+        const pending = await buildPendingImport(
+            api,
+            { ...baseRequest, outlierMethod: 'modZ', threshold: '3.5' },
+            () => {}
+        )
+        const dataElement = (pending.outlier.metadata.dataElements || [])[0]
+        expect(dataElement.name).toBe(
+            'DQ - Measles new outlier threshold (modified-Z 3.5)'
+        )
+        const predictor = (pending.outlier.metadata.predictors || [])[0]
+        expect(predictor.generator?.expression).toContain('median(')
+        expect(predictor.generator?.expression).toContain('/ 0.6745')
+        expect(predictor.generator?.missingValueStrategy).toBe(
+            'SKIP_IF_ANY_VALUE_MISSING'
+        )
+        expect(predictor.organisationUnitDescendants).toBe('DESCENDANTS')
+        // Indicators compare against the generated threshold DE
+        const thresholdDeId = pending.outlier.config[
+            '§DE_THRESHOLD_V2§'
+        ] as string
+        for (const indicator of pending.outlier.metadata.indicators || []) {
+            expect(indicator.numerator).toContain('subExpression(')
+        }
+        const outlierProp = (pending.outlier.metadata.indicators || []).find(
+            (indicator) => indicator.name.includes('values that are outliers')
+        )
+        expect(outlierProp?.numerator).toContain(`#{${thresholdDeId}}`)
     })
 
     it('warns when the data set is not monthly', async () => {
@@ -189,11 +257,15 @@ describe('buildPendingImport', () => {
     describe('conflict detection', () => {
         it('flags names that already exist on the server', async () => {
             const { api } = makeApi({
-                existingNames: ['DQ - Measles new outlier count'],
+                existingNames: [
+                    'DQ - Measles new outlier threshold (mean + 3.5 SD)',
+                ],
             })
             const pending = await buildPendingImport(api, baseRequest, () => {})
             expect(
-                pending.conflicts.has('name:DQ - Measles new outlier count')
+                pending.conflicts.has(
+                    'name:DQ - Measles new outlier threshold (mean + 3.5 SD)'
+                )
             ).toBe(true)
         })
 

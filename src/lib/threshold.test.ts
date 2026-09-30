@@ -124,3 +124,96 @@ describe('updateOutlierThreshold', () => {
         ).rejects.toThrow('Outlier configuration not found.')
     })
 })
+
+describe('updateOutlierThreshold (V2 hybrid, modified-Z)', () => {
+    const v2Config: PlaceholderConfig = {
+        '§NAME§': 'Foo',
+        '§DE_SOURCE§': DE_SOURCE,
+        '§VAL_MODZ§': '3.5',
+        '§THRESHOLD_DESC§': 'modified-Z 3.5',
+        '§DE_THRESHOLD_V2§': THRESHOLD_DE,
+        '§PD_THRESHOLD_V2§': THRESHOLD_PD,
+        '§IN_OUTLIER_PROP_V2§': OUTLIER_IN,
+    }
+
+    const makeV2Api = (): FakeApi =>
+        fakeApi({
+            onGet: (resource) => {
+                if (resource === 'dataStore/dqConfig/outliers') {
+                    return [{ [DE_SOURCE]: { ...v2Config } }]
+                }
+                if (resource === 'dataElements') {
+                    return {
+                        dataElements: [
+                            {
+                                id: THRESHOLD_DE,
+                                name: 'DQ - Foo outlier threshold (modified-Z 3.5)',
+                                description:
+                                    'Outlier threshold for Foo (modified-Z 3.5).',
+                            },
+                        ],
+                    }
+                }
+                if (resource === 'predictors') {
+                    return {
+                        predictors: [
+                            {
+                                id: THRESHOLD_PD,
+                                name: 'DQ - Foo outlier threshold (modified-Z 3.5)',
+                                generator: { expression: 'old expression' },
+                            },
+                        ],
+                    }
+                }
+                if (resource === `predictors/${THRESHOLD_PD}`) {
+                    return { lastUpdated: SERVER_STAMP }
+                }
+                if (resource === 'indicators') {
+                    return {
+                        indicators: [
+                            {
+                                id: OUTLIER_IN,
+                                name: 'DQ - Foo values that are outliers (%)',
+                                description:
+                                    'outliers above the outlier threshold (modified-Z 3.5)',
+                            },
+                        ],
+                    }
+                }
+                throw new Error(`Unexpected GET ${resource}`)
+            },
+        })
+
+    it('rebuilds the generator and renames threshold objects', async () => {
+        const fake = makeV2Api()
+        await updateOutlierThreshold(fake.api, DE_SOURCE, '4.0')
+
+        const posts = fake.find('post', 'metadata')
+        const predictorPost = posts.find(
+            (call) => (call.data as { predictors?: unknown[] }).predictors
+        )
+        const predictor = (
+            predictorPost?.data as {
+                predictors: {
+                    name: string
+                    generator: { expression: string }
+                }[]
+            }
+        ).predictors[0]
+        expect(predictor.name).toBe(
+            'DQ - Foo outlier threshold (modified-Z 4.0)'
+        )
+        expect(predictor.generator.expression).toContain('median(')
+        expect(predictor.generator.expression).toContain(`#{${DE_SOURCE}}`)
+        expect(predictor.generator.expression).toContain('4.0 * (median(')
+        expect(predictor.generator.expression).not.toContain('§')
+
+        const puts = fake.find('put', 'dataStore/dqConfig')
+        const stored = (puts[0].data as Record<string, PlaceholderConfig>[])[0][
+            DE_SOURCE
+        ]
+        expect(stored['§VAL_MODZ§']).toBe('4.0')
+        expect(stored['§THRESHOLD_DESC§']).toBe('modified-Z 4.0')
+        expect(stored.editedAt).toBe(SERVER_STAMP)
+    })
+})

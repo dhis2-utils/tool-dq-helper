@@ -8,6 +8,9 @@ import {
     templateCompleteness,
     templateCompletenessDisaggregated,
     templateConsistency,
+    templateHybridCompleteness,
+    templateHybridConsistency,
+    templateHybridOutlier,
     templateOutlier,
 } from './templates'
 import { CheckType, MetadataKind } from './types'
@@ -48,6 +51,18 @@ const outlierMetadataLabels = (): LabelMap => ({
     '§PD_THRESHOLD§': ['predictor', i18n.t('Outlier threshold (predictor)')],
     '§IN_NOUTLIER_PROP§': ['indicator', i18n.t('Excluding outliers (%)')],
     '§IN_OUTLIER_PROP§': ['indicator', i18n.t('Values that are outliers (%)')],
+    // V2 hybrid layout
+    '§DE_THRESHOLD_V2§': [
+        'dataElement',
+        i18n.t('Outlier threshold (data element)'),
+    ],
+    '§PD_THRESHOLD_V2§': ['predictor', i18n.t('Outlier threshold (predictor)')],
+    '§IN_OUTLIER_PROP_V2§': [
+        'indicator',
+        i18n.t('Values that are outliers (%)'),
+    ],
+    '§IN_NOUTLIER_PROP_V2§': ['indicator', i18n.t('Excluding outliers (%)')],
+    '§IN_OUTLIER_VAL_V2§': ['indicator', i18n.t('Outlier values')],
 })
 
 const consistencyMetadataLabels = (): LabelMap => ({
@@ -68,6 +83,7 @@ const consistencyMetadataLabels = (): LabelMap => ({
         i18n.t('Reported any of last 12 months (predictor)'),
     ],
     '§IN_CONS_PROP§': ['indicator', i18n.t('Consistent reporting (%)')],
+    '§IN_CONS_PROP_V2§': ['indicator', i18n.t('Consistent reporting (%)')],
 })
 
 const completenessMetadataLabels = (): LabelMap => ({
@@ -84,6 +100,7 @@ const completenessMetadataLabels = (): LabelMap => ({
         'indicator',
         i18n.t('Completeness any disaggregation (%)'),
     ],
+    '§IN_COMPL_V2§': ['indicator', i18n.t('Completeness (%)')],
 })
 
 export const labelMapsByCheck = (): Record<CheckType, LabelMap> => ({
@@ -164,6 +181,9 @@ export const collectTemplateEntries = (): Record<string, TemplateEntry> => {
         templateConsistency(),
         templateCompleteness(),
         templateCompletenessDisaggregated(),
+        templateHybridOutlier(),
+        templateHybridConsistency(),
+        templateHybridCompleteness(),
     ]
     const kinds = ['dataElements', 'predictors', 'indicators'] as const
     for (const bundle of bundles) {

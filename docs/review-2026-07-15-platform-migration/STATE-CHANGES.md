@@ -4,14 +4,14 @@ Date: 2026-07-15 · Reviewer: agent (Claude Code)
 
 ## Broker instances
 
-| Instance | Version / seed | Purpose | Status |
-| --- | --- | --- | --- |
-| `agent-dq-sl41` | 2.41.9 / `dhis2-db-sierra-leone_v41` | full functional suite | **deleted** after testing |
-| `agent-dq-sl43` | 2.43.0.1 / `dhis2-db-sierra-leone_v43` | smoke suite + global-shell check | **deleted** after testing |
-| `agent-dq-laos41` | 2.41 / `lao_hmis_demo_v41` | smoke suite (Laos demo data) | **deleted** after testing |
-| `agent-dq-laos43` | 2.43 / `lao_hmis_demo_v41` (Flyway-migrated on boot) | smoke suite, 41→43 DB migration path | **deleted** after testing |
-| `agent-dq-manual` | 2.43.0.1 / `dhis2-db-sierra-leone_v43` | M1/M2/L3 verification + user-manual screenshots (follow-up pass) | **deleted** after testing |
-| `agent-meta-rt-b` | pre-existing (not created by this review) | — | left untouched |
+| Instance          | Version / seed                                       | Purpose                                                          | Status                    |
+| ----------------- | ---------------------------------------------------- | ---------------------------------------------------------------- | ------------------------- |
+| `agent-dq-sl41`   | 2.41.9 / `dhis2-db-sierra-leone_v41`                 | full functional suite                                            | **deleted** after testing |
+| `agent-dq-sl43`   | 2.43.0.1 / `dhis2-db-sierra-leone_v43`               | smoke suite + global-shell check                                 | **deleted** after testing |
+| `agent-dq-laos41` | 2.41 / `lao_hmis_demo_v41`                           | smoke suite (Laos demo data)                                     | **deleted** after testing |
+| `agent-dq-laos43` | 2.43 / `lao_hmis_demo_v41` (Flyway-migrated on boot) | smoke suite, 41→43 DB migration path                             | **deleted** after testing |
+| `agent-dq-manual` | 2.43.0.1 / `dhis2-db-sierra-leone_v43`               | M1/M2/L3 verification + user-manual screenshots (follow-up pass) | **deleted** after testing |
+| `agent-meta-rt-b` | pre-existing (not created by this review)            | —                                                                | left untouched            |
 
 ## Mutations made on test instances (all disposable, all deleted)
 

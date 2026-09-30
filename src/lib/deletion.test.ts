@@ -222,3 +222,97 @@ describe('deleteConfiguration', () => {
         expect(storePut?.data).toEqual([])
     })
 })
+
+// ---------------------------------------------------------------------------
+// V2 hybrid configurations: 1 threshold DE + 1 threshold predictor + the
+// metric indicators; candidates and gates driven by the _V2 placeholders.
+
+describe('deleteConfiguration (V2 hybrid)', () => {
+    const substituteV2 = (template: string | null): string =>
+        (template || '')
+            .replace(/§NAME§/g, 'Foo')
+            .replace(/§THRESHOLD_DESC§/g, 'modified-Z 3.5')
+
+    const makeV2Api = (): FakeApi => {
+        const storedConfig: PlaceholderConfig = {
+            '§NAME§': 'Foo',
+            '§VAL_MODZ§': '3.5',
+            '§THRESHOLD_DESC§': 'modified-Z 3.5',
+            '§DE_THRESHOLD_V2§': GEN_DE,
+            '§PD_THRESHOLD_V2§': GEN_PD,
+            '§IN_OUTLIER_PROP_V2§': GEN_IN,
+        }
+        const dataElement = {
+            id: GEN_DE,
+            name: substituteV2(templates['§DE_THRESHOLD_V2§'].name),
+            description: substituteV2(
+                templates['§DE_THRESHOLD_V2§'].description
+            ),
+            created: CREATED,
+            lastUpdated: CREATED,
+        }
+        const predictor = {
+            id: GEN_PD,
+            name: substituteV2(templates['§PD_THRESHOLD_V2§'].name),
+            generator: {
+                description: substituteV2(
+                    templates['§PD_THRESHOLD_V2§'].description
+                ),
+            },
+            created: CREATED,
+            lastUpdated: CREATED,
+        }
+        const indicator = {
+            id: GEN_IN,
+            name: substituteV2(templates['§IN_OUTLIER_PROP_V2§'].name),
+            description: substituteV2(
+                templates['§IN_OUTLIER_PROP_V2§'].description
+            ),
+            created: CREATED,
+            lastUpdated: CREATED,
+        }
+        return fakeApi({
+            onGet: (resource) => {
+                if (resource === 'dataStore/dqConfig/outliers') {
+                    return [{ [DE_SOURCE]: storedConfig }]
+                }
+                if (
+                    resource === 'dataStore/dqConfig/consistency' ||
+                    resource === 'dataStore/dqConfig/completeness'
+                ) {
+                    return []
+                }
+                if (resource.startsWith('dataElementGroups/')) {
+                    return { dataElements: [{ id: GEN_DE }] }
+                }
+                if (resource.startsWith('indicatorGroups/')) {
+                    return { indicators: [{ id: GEN_IN }] }
+                }
+                if (resource.startsWith('predictorGroups/')) {
+                    return { predictors: [{ id: GEN_PD }] }
+                }
+                if (resource === 'dataElements') {
+                    return { dataElements: [dataElement] }
+                }
+                if (resource === 'predictors') {
+                    return { predictors: [predictor] }
+                }
+                if (resource === 'indicators') {
+                    return { indicators: [indicator] }
+                }
+                throw new Error(`Unexpected GET ${resource}`)
+            },
+        })
+    }
+
+    it('passes all gates and deletes in dependency order', async () => {
+        const fake = makeV2Api()
+        const outcome = await run(fake, true)
+
+        expect(outcome.hasWarnings).toBe(false)
+        const posts = deletePosts(fake)
+        const kinds = posts.map((call) => Object.keys(call.data as object)[0])
+        expect(kinds).toEqual(['indicators', 'predictors', 'dataElements'])
+        expect(outcome.message).toContain('Outliers metadata: deleted.')
+    })
+})

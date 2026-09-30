@@ -1,6 +1,6 @@
 {
-    "name": "tool-dq-config",
-    "version": "1.0.0",
+    "name": "tool-dq-helper",
+    "version": "1.0.1",
     "description": "Tool to configure data quality metrics metadata in DHIS2",
     "license": "BSD-3-Clause",
     "private": true,
@@ -28,6 +28,7 @@
         "@dhis2/config-prettier": "^0.2.2",
         "@eslint/compat": "^2.0.0",
         "@types/jest": "^30.0.0",
+        "@types/node": "^22.20.1",
         "@types/react": "^18.3.31",
         "@types/react-dom": "^18.3.7",
         "eslint": "^9.39.2",

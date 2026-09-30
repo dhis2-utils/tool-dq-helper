@@ -4,38 +4,38 @@ Tested: 2026-07-15 · App served as installed zip (`POST /api/apps`), driven wit
 
 ## Instances
 
-| Label | URL | DHIS2 version | Source |
-|---|---|---|---|
-| SL 41 | http://dhis2-agent-dq-sl41:8080 | 2.41.9 | broker, seed `dhis2-db-sierra-leone_v41` |
-| SL 43 | http://dhis2-agent-dq-sl43:8080 | 2.43.0.1 | broker, seed `dhis2-db-sierra-leone_v43` |
-| Laos 41 | http://dhis2-agent-dq-laos41:8080 | 2.41.9 | broker, seed `lao_hmis_demo_v41` |
-| Laos 43 | http://dhis2-agent-dq-laos43:8080 | 2.43.0.1 | broker, seed `lao_hmis_demo_v41` migrated by Flyway on boot (also validates the 41→43 upgrade path) |
+| Label   | URL                               | DHIS2 version | Source                                                                                              |
+| ------- | --------------------------------- | ------------- | --------------------------------------------------------------------------------------------------- |
+| SL 41   | http://dhis2-agent-dq-sl41:8080   | 2.41.9        | broker, seed `dhis2-db-sierra-leone_v41`                                                            |
+| SL 43   | http://dhis2-agent-dq-sl43:8080   | 2.43.0.1      | broker, seed `dhis2-db-sierra-leone_v43`                                                            |
+| Laos 41 | http://dhis2-agent-dq-laos41:8080 | 2.41.9        | broker, seed `lao_hmis_demo_v41`                                                                    |
+| Laos 43 | http://dhis2-agent-dq-laos43:8080 | 2.43.0.1      | broker, seed `lao_hmis_demo_v41` migrated by Flyway on boot (also validates the 41→43 upgrade path) |
 
-Test metadata: Sierra Leone — data set *Morbidity*, DE *Measles new* (age-disaggregated), proxy CoC *12-59m*, level 4 (Facility). Laos — data set *CH - Malaria (Monthly)*, DE *CH121 - Confirmed malaria cases* (age-disaggregated), proxy CoC *0-4 years*, level 4 (Facility).
+Test metadata: Sierra Leone — data set _Morbidity_, DE _Measles new_ (age-disaggregated), proxy CoC _12-59m_, level 4 (Facility). Laos — data set _CH - Malaria (Monthly)_, DE _CH121 - Confirmed malaria cases_ (age-disaggregated), proxy CoC _0-4 years_, level 4 (Facility).
 
 ## Results
 
 Final build unless noted. SL 41 additionally ran the exhaustive scenarios (conflict path, gate-failure paths) during iterative fixing.
 
-| Step | SL 41 | SL 43 | Laos 41 | Laos 43 |
-|---|---|---|---|---|
-| App installs (`POST /api/apps`) | PASS (204) | PASS (201) | PASS (204) | PASS (201) |
-| App loads with header bar / global shell | PASS (top-level) | PASS (global-shell iframe) | PASS (top-level) | PASS (global-shell iframe) |
-| Initialise modal on fresh instance → groups + dataStore created | PASS (7 groups + 4 keys verified) | PASS | PASS | PASS |
-| Form: data set → DE (numeric only) → disaggregation → completeness approach → OU level | PASS | PASS | PASS | PASS |
-| OU levels not assigned to data set disabled with suffix | PASS | PASS | PASS (only level 4 enabled) | PASS |
-| Preview: 3 check sections, correct substituted names/expressions | PASS | PASS | PASS (27 col headers) | PASS |
-| Proxy completeness uses operand `deId.cocId` in numerator | PASS | PASS | PASS | PASS |
-| "Any value" completeness generates DE + predictor + indicator | PASS | not run | not run | not run |
-| Import: 16/16 steps OK; sharing `r-------` public + admin group rw | PASS | PASS | PASS | PASS |
-| Configured DE disabled in select after import | PASS | not re-run | not re-run | not re-run |
-| Overview card: chips (SD value), data set, details tables | PASS | PASS | PASS | PASS |
-| Edit outlier threshold 3.0→2.5 (names, expression, dataStore) | PASS (verified via API) | PASS | PASS | PASS |
-| Remove config only (keep metadata): store + groups cleaned, metadata retained | PASS | not run | not run | not run |
-| Re-configure same DE → conflicts highlighted, Import disabled | PASS (31 ⚠ cells, legend, warning alert) | not run | not run | not run |
-| Remove incl. metadata after app edit: everything deleted | PASS | PASS | PASS | PASS |
-| Gate: manually modified object blocks only its check ("modified after creation"), others deleted | PASS | PASS (pre-fix build; observed as designed) | not run | not run |
-| Empty state with "Add new" link after last removal | PASS | PASS | PASS | PASS |
+| Step                                                                                             | SL 41                                    | SL 43                                      | Laos 41                     | Laos 43                    |
+| ------------------------------------------------------------------------------------------------ | ---------------------------------------- | ------------------------------------------ | --------------------------- | -------------------------- |
+| App installs (`POST /api/apps`)                                                                  | PASS (204)                               | PASS (201)                                 | PASS (204)                  | PASS (201)                 |
+| App loads with header bar / global shell                                                         | PASS (top-level)                         | PASS (global-shell iframe)                 | PASS (top-level)            | PASS (global-shell iframe) |
+| Initialise modal on fresh instance → groups + dataStore created                                  | PASS (7 groups + 4 keys verified)        | PASS                                       | PASS                        | PASS                       |
+| Form: data set → DE (numeric only) → disaggregation → completeness approach → OU level           | PASS                                     | PASS                                       | PASS                        | PASS                       |
+| OU levels not assigned to data set disabled with suffix                                          | PASS                                     | PASS                                       | PASS (only level 4 enabled) | PASS                       |
+| Preview: 3 check sections, correct substituted names/expressions                                 | PASS                                     | PASS                                       | PASS (27 col headers)       | PASS                       |
+| Proxy completeness uses operand `deId.cocId` in numerator                                        | PASS                                     | PASS                                       | PASS                        | PASS                       |
+| "Any value" completeness generates DE + predictor + indicator                                    | PASS                                     | not run                                    | not run                     | not run                    |
+| Import: 16/16 steps OK; sharing `r-------` public + admin group rw                               | PASS                                     | PASS                                       | PASS                        | PASS                       |
+| Configured DE disabled in select after import                                                    | PASS                                     | not re-run                                 | not re-run                  | not re-run                 |
+| Overview card: chips (SD value), data set, details tables                                        | PASS                                     | PASS                                       | PASS                        | PASS                       |
+| Edit outlier threshold 3.0→2.5 (names, expression, dataStore)                                    | PASS (verified via API)                  | PASS                                       | PASS                        | PASS                       |
+| Remove config only (keep metadata): store + groups cleaned, metadata retained                    | PASS                                     | not run                                    | not run                     | not run                    |
+| Re-configure same DE → conflicts highlighted, Import disabled                                    | PASS (31 ⚠ cells, legend, warning alert) | not run                                    | not run                     | not run                    |
+| Remove incl. metadata after app edit: everything deleted                                         | PASS                                     | PASS                                       | PASS                        | PASS                       |
+| Gate: manually modified object blocks only its check ("modified after creation"), others deleted | PASS                                     | PASS (pre-fix build; observed as designed) | not run                     | not run                    |
+| Empty state with "Add new" link after last removal                                               | PASS                                     | PASS                                       | PASS                        | PASS                       |
 
 ## Version-specific failures
 

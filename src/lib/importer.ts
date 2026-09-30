@@ -72,7 +72,10 @@ const splitOutlierPredictors = (
             analysis: [],
         }
     for (const predictor of predictors) {
-        if (outlierConfig['§PD_THRESHOLD§'] === predictor.id) {
+        if (
+            outlierConfig['§PD_THRESHOLD§'] === predictor.id ||
+            outlierConfig['§PD_THRESHOLD_V2§'] === predictor.id
+        ) {
             result.threshold.push(predictor)
         } else {
             result.analysis.push(predictor)
@@ -139,6 +142,10 @@ const importCheck = async (
 
     try {
         for (const step of addGroupSteps) {
+            // V2 checks have no predictors/data elements for some steps
+            if (step.members.length === 0) {
+                continue
+            }
             const report = await addToGroup(api, {
                 groupKind: step.groupKind,
                 groupId: step.groupId,

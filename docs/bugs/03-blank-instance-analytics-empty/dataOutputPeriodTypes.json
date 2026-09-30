@@ -1,0 +1,10 @@
+[
+    { "name": "Daily" },
+    { "name": "Weekly" },
+    { "name": "Monthly" },
+    { "name": "BiMonthly" },
+    { "name": "Quarterly" },
+    { "name": "SixMonthly" },
+    { "name": "Yearly" },
+    { "name": "FinancialJuly" }
+]

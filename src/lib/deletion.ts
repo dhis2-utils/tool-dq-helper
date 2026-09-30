@@ -435,8 +435,12 @@ export const deleteConfiguration = async (
             '§PD_OUTLIER_COUNT§',
             '§PD_OUTLIER_VAL§',
             '§PD_THRESHOLD§',
+            '§PD_THRESHOLD_V2§',
         ])
-        const thresholdPdIds = configIds(config, ['§PD_THRESHOLD§'])
+        const thresholdPdIds = configIds(config, [
+            '§PD_THRESHOLD§',
+            '§PD_THRESHOLD_V2§',
+        ])
         const analysisPdIds = pdIds.filter((id) => !thresholdPdIds.includes(id))
 
         await removeIfAny(
@@ -448,12 +452,19 @@ export const deleteConfiguration = async (
                 '§DE_OUTLIER_COUNT§',
                 '§DE_OUTLIER_VAL§',
                 '§DE_THRESHOLD§',
+                '§DE_THRESHOLD_V2§',
             ])
         )
         await removeIfAny(
             'indicatorGroups',
             baseConfig.indicatorGroup,
-            configIds(config, ['§IN_NOUTLIER_PROP§', '§IN_OUTLIER_PROP§'])
+            configIds(config, [
+                '§IN_NOUTLIER_PROP§',
+                '§IN_OUTLIER_PROP§',
+                '§IN_NOUTLIER_PROP_V2§',
+                '§IN_OUTLIER_PROP_V2§',
+                '§IN_OUTLIER_VAL_V2§',
+            ])
         )
         await removeIfAny('predictorGroups', baseConfig.predictorGroup, pdIds)
         await removeIfAny(
@@ -480,7 +491,7 @@ export const deleteConfiguration = async (
         await removeIfAny(
             'indicatorGroups',
             baseConfig.indicatorGroup,
-            configIds(config, ['§IN_CONS_PROP§'])
+            configIds(config, ['§IN_CONS_PROP§', '§IN_CONS_PROP_V2§'])
         )
         await removeIfAny('predictorGroups', baseConfig.predictorGroup, pdIds)
         await removeIfAny(
@@ -496,7 +507,7 @@ export const deleteConfiguration = async (
         await removeIfAny(
             'indicatorGroups',
             baseConfig.indicatorGroup,
-            configIds(config, ['§IN_COMPL§', '§IN_COMPL_ANY§'])
+            configIds(config, ['§IN_COMPL§', '§IN_COMPL_ANY§', '§IN_COMPL_V2§'])
         )
     }
 

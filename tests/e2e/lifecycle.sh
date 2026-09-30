@@ -24,7 +24,7 @@ DATASET=${DATASET:?set DATASET}
 DE=${DE:?set DE}
 PROXY_COC=${PROXY_COC:-}   # empty = data element without disaggregation
 OULEVEL=${OULEVEL:?set OULEVEL e.g. "Level 4 - Facility"}
-APP_KEY=${APP_KEY:-tool-dq-config}
+APP_KEY=${APP_KEY:-tool-dq-helper}
 
 PASS=0; FAIL=0
 step() { echo; echo "== $1"; }
@@ -99,12 +99,12 @@ R "await f.getByRole('button', { name: 'Import' }).click()"
 R "await f.getByRole('dialog').getByRole('button', { name: 'Import' }).click()"
 sleep 10
 OKROWS=$(playwright-cli --raw snapshot | grep -c 'cell "OK"')
-[ "$OKROWS" -ge 14 ] && ok "import steps all OK ($OKROWS rows)" || bad "import rows OK=$OKROWS (expected >=14)"
+[ "$OKROWS" -ge 9 ] && ok "import steps all OK ($OKROWS rows)" || bad "import rows OK=$OKROWS (expected >=9)"
 
 step "Verify metadata on server"
 DES=$(count_kind dataElements "DQ - $DE"); PDS=$(count_kind predictors "DQ - $DE"); INS=$(count_kind indicators "DQ - $DE")
-[ "$DES" -ge 7 ] && ok "data elements created ($DES)" || bad "data elements: $DES"
-[ "$PDS" -ge 7 ] && ok "predictors created ($PDS)" || bad "predictors: $PDS"
+[ "$DES" -ge 1 ] && ok "data elements created ($DES)" || bad "data elements: $DES"
+[ "$PDS" -ge 1 ] && ok "predictors created ($PDS)" || bad "predictors: $PDS"
 [ "$INS" -ge 4 ] && ok "indicators created ($INS)" || bad "indicators: $INS"
 
 step "Edit outlier threshold to 2.5"
@@ -113,9 +113,9 @@ R "await f.getByRole('button', { name: 'Edit' }).click()"
 R "await f.locator('input[type=number]').fill('2.5')"
 R "await f.getByRole('button', { name: 'Save' }).click()"
 sleep 6
-playwright-cli --raw snapshot | grep -q "Outliers (2.5 SD)" && ok "chip shows 2.5 SD" || bad "chip not updated"
+playwright-cli --raw snapshot | grep -q "Outliers (modified-Z 2.5)" && ok "chip shows modified-Z 2.5" || bad "chip not updated"
 api -G "$DHIS2_URL/api/predictors" --data-urlencode "filter=name:like:DQ - $DE outlier threshold" --data-urlencode "fields=name" |
-    grep -q "2.5 SD" && ok "predictor renamed to 2.5 SD" || bad "predictor not renamed"
+    grep -q "modified-Z 2.5" && ok "predictor renamed to modified-Z 2.5" || bad "predictor not renamed"
 
 step "Remove configuration incl. metadata"
 R "await f.getByRole('button', { name: 'Remove' }).first().click()"

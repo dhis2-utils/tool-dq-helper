@@ -62,7 +62,7 @@ export const InstructionsPage = () => (
             </li>
             <li>
                 {i18n.t(
-                    'Set the threshold for outlier detection (standard deviations from mean)'
+                    'Choose the outlier detection method (modified Z-score or standard deviations from mean) and set its threshold'
                 )}
             </li>
             <li>

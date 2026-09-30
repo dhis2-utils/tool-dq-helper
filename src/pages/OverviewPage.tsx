@@ -28,7 +28,11 @@ import { Link } from 'react-router-dom'
 import styles from './OverviewPage.module.css'
 import { LoadingLayer } from '@/components/LoadingLayer'
 import { Panel } from '@/components/Panel'
-import { ThresholdField, isValidThreshold } from '@/components/ThresholdField'
+import {
+    ThresholdField,
+    OutlierMethod,
+    isValidThreshold,
+} from '@/components/ThresholdField'
 import { useOverview } from '@/hooks/queries'
 import { useApi } from '@/hooks/useApi'
 import { useAppAlerts } from '@/hooks/useAppAlerts'
@@ -43,6 +47,11 @@ const configChipLabel = (
     checkType: CheckType,
     config: PlaceholderConfig
 ): string => {
+    if (checkType === 'outliers' && config['§THRESHOLD_DESC§']) {
+        return i18n.t('Outliers ({{- desc}})', {
+            desc: config['§THRESHOLD_DESC§'],
+        })
+    }
     if (checkType === 'outliers' && config['§VAL_STDDEV§']) {
         return i18n.t('Outliers ({{- sd}} SD)', { sd: config['§VAL_STDDEV§'] })
     }
@@ -77,11 +86,18 @@ const ConfigDetails = ({
                             <dd>
                                 <code>{element.id}</code>
                             </dd>
-                            {config['§VAL_STDDEV§'] && (
+                            {config['§THRESHOLD_DESC§'] ? (
                                 <>
-                                    <dt>{i18n.t('Standard deviations')}</dt>
-                                    <dd>{config['§VAL_STDDEV§']}</dd>
+                                    <dt>{i18n.t('Outlier threshold')}</dt>
+                                    <dd>{config['§THRESHOLD_DESC§']}</dd>
                                 </>
+                            ) : (
+                                config['§VAL_STDDEV§'] && (
+                                    <>
+                                        <dt>{i18n.t('Standard deviations')}</dt>
+                                        <dd>{config['§VAL_STDDEV§']}</dd>
+                                    </>
+                                )
                             )}
                             {config['§OU_LEVEL§'] && (
                                 <>
@@ -141,21 +157,28 @@ const ConfigDetails = ({
 
 const EditThresholdForm = ({
     currentSD,
+    method,
     busy,
     onSave,
     onCancel,
 }: {
     currentSD: string
+    method: OutlierMethod
     busy: boolean
     onSave: (newSD: string) => void
     onCancel: () => void
 }) => {
     const [value, setValue] = useState(currentSD)
-    const valid = isValidThreshold(value)
+    const valid = isValidThreshold(value, method)
     return (
         <div className={styles.editForm}>
             <ThresholdField
-                label={i18n.t('New outlier threshold (standard deviations)')}
+                label={
+                    method === 'modZ'
+                        ? i18n.t('New outlier threshold (modified Z-score)')
+                        : i18n.t('New outlier threshold (standard deviations)')
+                }
+                method={method}
                 value={value}
                 onChange={setValue}
             />
@@ -219,8 +242,8 @@ export const OverviewPage = ({
         try {
             await updateOutlierThreshold(api, deId, newSD)
             alerts.showSuccess(
-                i18n.t('Outlier threshold updated to {{- sd}} SD.', {
-                    sd: newSD,
+                i18n.t('Outlier threshold updated to {{- value}}.', {
+                    value: newSD,
                 })
             )
             setEditingId(null)
@@ -390,7 +413,14 @@ export const OverviewPage = ({
                             )}
                         </div>
 
+                        {/* Remount (and thereby collapse) the details when
+                            edit mode toggles, so the threshold form below is
+                            not pushed out of view by an expanded details
+                            section */}
                         <ConfigDetails
+                            key={
+                                editingId === element.id ? 'editing' : 'viewing'
+                            }
                             element={element}
                             ouLevelNames={ouLevelNames}
                         />
@@ -399,9 +429,17 @@ export const OverviewPage = ({
                             element.configs.outliers && (
                                 <EditThresholdForm
                                     currentSD={
-                                        element.configs.outliers[
-                                            '§VAL_STDDEV§'
-                                        ] as string
+                                        (element.configs.outliers[
+                                            '§VAL_MODZ§'
+                                        ] ||
+                                            element.configs.outliers[
+                                                '§VAL_STDDEV§'
+                                            ]) as string
+                                    }
+                                    method={
+                                        element.configs.outliers['§VAL_MODZ§']
+                                            ? 'modZ'
+                                            : 'sd'
                                     }
                                     busy={busy}
                                     onSave={(newSD) =>

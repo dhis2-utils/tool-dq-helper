@@ -5,8 +5,8 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
-"POT-Creation-Date: 2026-07-16T05:41:39.678Z\n"
-"PO-Revision-Date: 2026-07-16T05:41:39.680Z\n"
+"POT-Creation-Date: 2026-09-15T13:17:16.814Z\n"
+"PO-Revision-Date: 2026-09-15T13:17:16.814Z\n"
 
 msgid "Add new"
 msgstr "Add new"
@@ -102,8 +102,8 @@ msgstr "Consistency"
 msgid "Completeness"
 msgstr "Completeness"
 
-msgid "Threshold must be between 2 and 4."
-msgstr "Threshold must be between 2 and 4."
+msgid "Threshold must be between {{min}} and {{max}}."
+msgstr "Threshold must be between {{min}} and {{max}}."
 
 msgid "Excluding outliers (data element)"
 msgstr "Excluding outliers (data element)"
@@ -140,6 +140,9 @@ msgstr "Excluding outliers (%)"
 
 msgid "Values that are outliers (%)"
 msgstr "Values that are outliers (%)"
+
+msgid "Outlier values"
+msgstr "Outlier values"
 
 msgid "Reported all 12 months (data element)"
 msgstr "Reported all 12 months (data element)"
@@ -247,6 +250,18 @@ msgstr "Failed to load organisation unit levels ({{- message}})"
 msgid " (not assigned to data set)"
 msgstr " (not assigned to data set)"
 
+msgid "Outlier detection method"
+msgstr "Outlier detection method"
+
+msgid "Modified Z-score (recommended)"
+msgstr "Modified Z-score (recommended)"
+
+msgid "Standard deviations from mean"
+msgstr "Standard deviations from mean"
+
+msgid "Outlier threshold (modified Z-score)"
+msgstr "Outlier threshold (modified Z-score)"
+
 msgid "Outlier threshold (standard deviations from mean)"
 msgstr "Outlier threshold (standard deviations from mean)"
 
@@ -298,11 +313,18 @@ msgstr "Count as complete when any category has data"
 msgid "Select the organisation unit level where data is collected"
 msgstr "Select the organisation unit level where data is collected"
 
-msgid "Set the threshold for outlier detection (standard deviations from mean)"
-msgstr "Set the threshold for outlier detection (standard deviations from mean)"
+msgid ""
+"Choose the outlier detection method (modified Z-score or standard "
+"deviations from mean) and set its threshold"
+msgstr ""
+"Choose the outlier detection method (modified Z-score or standard "
+"deviations from mean) and set its threshold"
 
 msgid "Click Preview to review the configuration before importing"
 msgstr "Click Preview to review the configuration before importing"
+
+msgid "Outliers ({{- desc}})"
+msgstr "Outliers ({{- desc}})"
 
 msgid "Outliers ({{- sd}} SD)"
 msgstr "Outliers ({{- sd}} SD)"
@@ -312,6 +334,9 @@ msgstr "Show details"
 
 msgid "Data element ID"
 msgstr "Data element ID"
+
+msgid "Outlier threshold"
+msgstr "Outlier threshold"
 
 msgid "Standard deviations"
 msgstr "Standard deviations"
@@ -324,6 +349,9 @@ msgstr "Type"
 
 msgid "UID"
 msgstr "UID"
+
+msgid "New outlier threshold (modified Z-score)"
+msgstr "New outlier threshold (modified Z-score)"
 
 msgid "New outlier threshold (standard deviations)"
 msgstr "New outlier threshold (standard deviations)"
@@ -338,8 +366,8 @@ msgstr ""
 "To change data element or org unit level, remove and re-create the "
 "configuration."
 
-msgid "Outlier threshold updated to {{- sd}} SD."
-msgstr "Outlier threshold updated to {{- sd}} SD."
+msgid "Outlier threshold updated to {{- value}}."
+msgstr "Outlier threshold updated to {{- value}}."
 
 msgid "Failed to update threshold ({{- message}})"
 msgstr "Failed to update threshold ({{- message}})"

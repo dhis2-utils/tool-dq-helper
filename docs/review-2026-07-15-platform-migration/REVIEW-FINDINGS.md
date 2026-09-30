@@ -16,7 +16,7 @@ Findings marked **[FIXED]** were resolved during this session and re-verified ag
 #### H1. [FIXED] "Also delete metadata" never deleted anything — ownership gate evaluated after group cleanup
 
 - **Where**: `src/lib/deletion.ts:360` (fix; gate evaluation now precedes group removal)
-- **What**: Pre-existing bug faithfully inherited from the original tool (`src/app.js` at git HEAD, lines ~1524–1594): the delete flow removed the generated objects from the app-managed groups *first*, then evaluated the ownership gate — which checks membership of those same groups. The gate therefore always failed with "not owned by app" and metadata deletion was silently skipped for every check, on every version. Reproduced live on 2.41.9 before the fix.
+- **What**: Pre-existing bug faithfully inherited from the original tool (`src/app.js` at git HEAD, lines ~1524–1594): the delete flow removed the generated objects from the app-managed groups _first_, then evaluated the ownership gate — which checks membership of those same groups. The gate therefore always failed with "not owned by app" and metadata deletion was silently skipped for every check, on every version. Reproduced live on 2.41.9 before the fix.
 - **Fix**: Safety gates are evaluated before any group/dataStore cleanup. Verified: full metadata deletion now succeeds on 2.41 and 2.43.
 
 #### H2. [FIXED] The "dry-run" reference check actually deletes metadata — DHIS2 ignores `dryRun=true` for DELETE imports
@@ -60,8 +60,11 @@ Findings marked **[FIXED]** were resolved during this session and re-verified ag
 ### LOW
 
 #### L1. [FIXED] User manual screenshots show the old UI — all 13 referenced screenshots regenerated from the new app on DHIS2 2.43 (Sierra Leone demo, 1280×800); 6 unreferenced old-UI images deleted; manual text updated where it described old-UI mechanics (filterable selects, post-import behaviour, notification wording, testing appendix).
+
 #### L2. [FIXED] Metadata labels not translatable — `src/lib/labels.ts` label maps are now built lazily via functions with `i18n.t()` literals, so they pick up the active locale and are extracted into `i18n/en.pot`.
+
 #### L3. [FIXED] Main bundle chunk >500 kB minified — vendor code is now split via `manualChunks` in `viteConfigExtensions.mts` (largest chunk 303 kB; warning gone). Note: all `@dhis2` packages must stay in ONE chunk — splitting `@dhis2/ui` from `@dhis2/app-runtime` breaks module initialisation order at runtime ("Cannot access X before initialization"; observed live, documented in the config).
+
 #### L4. [FIXED] Repo housekeeping — planning docs and the design-direction page moved to `docs/archive/` (preserving an uncommitted edit to the round-2 plan), `.DS_Store` files and the `.superpowers/` scratch dir deleted, `.gitignore` covers generated dirs (`.d2`, `src/locales`, `.pnpm-store`).
 
 ## Claims investigated and rejected
