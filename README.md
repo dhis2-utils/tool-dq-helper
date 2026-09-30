@@ -3,7 +3,7 @@
 > ![Maturity: Validated](https://img.shields.io/badge/maturity-Validated-yellow)  
 > Intended use: configure data quality metrics as DHIS2 metadata (predictors, data elements, indicators)
 > Maintainers: HISP Centre implementation team.
-> 
+>
 > **WARNING**
 > This tool is intended to be used by system administrators to perform specific tasks, it is not intended for end users. It is available as a DHIS2 app, but has not been through the same rigorous testing as normal core apps. It should be used with care, and always tested in a development environment.
 
